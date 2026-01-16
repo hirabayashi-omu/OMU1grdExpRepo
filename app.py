@@ -1046,10 +1046,13 @@ with st.expander("基本情報入力", expanded=True):
     r1_col1, r1_col2, r1_col3 = st.columns([3, 1, 1])
     with r1_col1:
         current_title = st.session_state.exp_title
+        # exp_title_selector を事前に初期化
+        if "exp_title_selector" not in st.session_state:
+            st.session_state.exp_title_selector = st.session_state.exp_title
+
         selected_title = st.selectbox(
             "実験タイトル",
             list(QUESTION_DICT.keys()),
-            index=list(QUESTION_DICT.keys()).index(current_title),
             key="exp_title_selector",
             help="実験のテーマを選択してください"
         )
@@ -1086,6 +1089,7 @@ with st.expander("基本情報入力", expanded=True):
         st.text_input("共同実験者② 出席番号", key="partner2_id")
     with r3_col4:
         st.text_input("共同実験者② 氏名", key="partner2_name")
+
 
 # -----------------------
 # 調査レポート（自宅課題）
@@ -1456,6 +1460,7 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
+
 
 
 
