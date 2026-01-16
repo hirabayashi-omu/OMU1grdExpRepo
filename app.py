@@ -16,14 +16,13 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 import base64
 
-
-# 日本語フォント登録（ipaexg.ttf を同じフォルダに置く）
+# === PDF 用 日本語フォント ===
 pdfmetrics.registerFont(TTFont('IPAexGothic', 'ipaexg.ttf'))
 
-# Matplotlib 用 日本語フォント登録
+# === Matplotlib 用 日本語フォント ===
+from matplotlib import font_manager, rcParams
 font_manager.fontManager.addfont("ipaexg.ttf")
 rcParams["font.family"] = "IPAexGothic"
-
 # -----------------------
 # ダイアログ・共通処理
 # -----------------------
@@ -1457,5 +1456,6 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
+
 
 
