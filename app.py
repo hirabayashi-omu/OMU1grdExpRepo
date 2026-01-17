@@ -140,6 +140,15 @@ def confirm_exp_title_change_dialog(new_title):
             apply_exp_state(st.session_state.experiment_registry[new_title])
         else:
             reset_experiment_data()
+
+        # セクション状態の復元 (レジストリに保存されている場合)
+        # Note: セクション状態はテーマごとに独立させるか、グローバルにするか？
+        # 要求は「選択している実験テーマ」「項目の開閉状態」を保存・復元。
+        # 通常、開閉状態は現在の作業状態なので、テーマ切り替え時に復元するよりは
+        # ファイル保存・復元時に戻れば良い。
+        # ここではテーマ切り替え時のセクション状態の復元は必須ではないが、
+        # "実験タイトルの切り替え" ダイアログは "現在の入力状態を保存" ではないため、
+        # 単に新しいテーマのデータロードのみ行う。
             
         if "exp_title_selector" in st.session_state:
             st.session_state.exp_title_selector = new_title
@@ -346,6 +355,8 @@ def perform_json_restore(uploaded_file):
             # 互換性維持：registryがない場合はトップレベルのデータをカレントとして扱う
             apply_exp_state(data)
 
+
+
         # タイトルセレクター同期
         if "exp_title_selector" in st.session_state:
             st.session_state.exp_title_selector = st.session_state.exp_title
@@ -397,6 +408,7 @@ def reset_experiment_data():
     # Clear editors
     for key in ["tools_list_editor", "references_list_editor", "melting_point_editor", "result_df_editor", "wt_clarity_editor", "fc_charge_editor", "fc_d1_editor", "fc_d2_editor", "fc_d3_editor"]:
         if key in st.session_state: del st.session_state[key]
+
 
 def create_proportional_image(img_io, max_width=100*mm, max_height=75*mm):
     """アスペクト比を維持しつつ、指定の枠内に収まるReportLab Imageを作成する"""
@@ -643,6 +655,8 @@ init_state("wt_clarity_df", pd.DataFrame({
 init_state("wt_coagulation_photo", None)
 init_state("wt_coagulation_text", "")
 init_state("wt_comparison_text", "")
+
+
 
 # -----------------------
 # 設問辞書
@@ -1081,7 +1095,8 @@ with st.sidebar:
                     "report": report_score,
                     "total": total_score
                 },
-                "experiment_registry": st.session_state.experiment_registry
+                "experiment_registry": st.session_state.experiment_registry,
+
             }
 
             st.session_state["json_export_data"] = json.dumps(export_data, ensure_ascii=False, indent=2)
@@ -1612,6 +1627,9 @@ with st.sidebar:
 # -----------------------
 # 基本情報入力
 # -----------------------
+# -----------------------
+# 基本情報入力
+# -----------------------
 with st.expander("基本情報入力", expanded=True):
     # 1段目：実験タイトル、実験日、クラス
     r1_col1, r1_col2, r1_col3 = st.columns([3, 1, 1])
@@ -1696,7 +1714,10 @@ with st.expander("基本情報入力", expanded=True):
 # -----------------------
 # 調査レポート（自宅課題）
 # -----------------------
-with st.expander("🏠 調査レポート（自宅課題）", expanded=True):
+# -----------------------
+# 調査レポート（自宅課題）
+# -----------------------
+with st.expander("🏠 調査レポート（自宅課題）"):
     st.info("※ 各設問へは、**指定された必須語句を含めて200文字以上**で記述してください。また、調査に使用した参考文献を下の表にまとめてください。")
     for q, words in QUESTION_DICT[st.session_state.exp_title].items():
         key_name = "設問_" + q.replace("？","").replace(" ","_")
@@ -1730,6 +1751,9 @@ with st.expander("🏠 調査レポート（自宅課題）", expanded=True):
     )
     st.session_state["references_list"] = edited_refs
 
+# -----------------------
+# 実験方法
+# -----------------------
 # -----------------------
 # 実験方法
 # -----------------------
@@ -1969,7 +1993,8 @@ elif st.session_state.exp_title == "実験③ 水処理装置の設計と提案"
 # -----------------------
 # 比較検証・考察
 # -----------------------
-with st.expander("比較検証と考察", expanded=True):
+with st.container():
+  with st.expander("比較検証と考察"):
     if st.session_state.exp_title == "実験① 熱の可視化":
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -2005,7 +2030,10 @@ with st.expander("比較検証と考察", expanded=True):
 # -----------------------
 # 結果グラフ
 # -----------------------
-with st.expander("結果グラフ", expanded=True):
+# -----------------------
+# 結果グラフ
+# -----------------------
+with st.expander("結果グラフ"):
     if st.session_state.exp_title == "実験① 熱の可視化":
         _, col_center, _ = st.columns([1, 4, 1])
         with col_center:
@@ -2052,7 +2080,10 @@ with st.expander("結果グラフ", expanded=True):
 # -----------------------
 # ルーブリック（評価基準）
 # -----------------------
-with st.expander("簡易自己評価（達成度）", expanded=False):
+# -----------------------
+# ルーブリック（評価基準）
+# -----------------------
+with st.expander("簡易自己評価（達成度）"):
     st.markdown("### 必要条件の達成度")
     st.caption("現在の入力状況に基づく目安の達成度です（最大：100%）。提出前の確認に使ってください。")
 
