@@ -16,6 +16,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.utils import ImageReader
 import base64
 
+rm ~/.matplotlib/fontlist-*.json
+
 # === PDF 用 日本語フォント ===
 pdfmetrics.registerFont(TTFont('IPAexGothic', 'ipaexg.ttf'))
 
@@ -23,6 +25,8 @@ pdfmetrics.registerFont(TTFont('IPAexGothic', 'ipaexg.ttf'))
 from matplotlib import font_manager, rcParams
 font_manager.fontManager.addfont("ipaexg.ttf")
 rcParams["font.family"] = "IPAexGothic"
+
+
 # -----------------------
 # ダイアログ・共通処理
 # -----------------------
@@ -238,7 +242,7 @@ def create_graph():
     # 既に登録済みのipaexg.ttfをMatplotlibで使うのは少々手間(FontProperties等)。
     # 簡易的に "Yu Gothic" や "Meiryo" 等、Windows標準をトライしつつ、
     # フォールバックする実装が望ましいが、今回は既存コードの "Yu Gothic" を踏襲。
-    plt.rcParams["font.family"] = "Yu Gothic"
+    plt.rcParams["font.family"] = "ipaexg.ttf"
     
     fig, ax = plt.subplots(figsize=(6,4))
     
@@ -1460,6 +1464,7 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
+
 
 
 
