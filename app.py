@@ -985,14 +985,6 @@ st.markdown("""
         font-weight: 700;
         margin-left: 0.5rem;
     }
-
-    /* チェックボックスの間隔を詰める */
-    div[data-testid="stCheckbox"] {
-        margin-bottom: -15px;
-    }
-    div[data-testid="stCheckbox"] label p {
-        font-size: 0.85rem !important;
-    }
     </style>
 
     <div class="main-header">
@@ -1636,7 +1628,7 @@ with st.expander("基本情報入力", expanded=True):
     prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
     if prec:
         with st.container(border=True):
-            st.markdown("<div style='font-size:0.9rem; font-weight:700; color:#ef4444; margin-bottom:10px;'>⚠️ 実験上の注意事項（すべて確認して✔を付けてください）</div>", unsafe_allow_html=True)
+            st.markdown("#### ⚠️ 実験上の注意事項（すべて確認して✔を付けてください）")
             c1, c2, c3 = st.columns(3)
             with c1:
                 st.checkbox(f"**👕 服装**: {prec['clothing']}", key="check_cloth")
