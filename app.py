@@ -82,9 +82,9 @@ def get_current_exp_state():
                 state[k] = val.to_dict(orient="records")
             else:
                 state[k] = val
-    # 設問データも追加
+    # 設問データと確認チェックも追加
     for k, v in st.session_state.items():
-        if k.startswith("設問_"):
+        if k.startswith("設問_") or k.startswith("check_"):
             state[k] = v
     return state
 
@@ -95,7 +95,7 @@ def apply_exp_state(state):
         return
 
     for k, v in state.items():
-        if k in EXP_DATA_KEYS or k.startswith("設問_"):
+        if k in EXP_DATA_KEYS or k.startswith("設問_") or k.startswith("check_"):
             # テーブル系はDataFrameに再変換
             df_cols = {
                 "tools_list": ["器具・装置・薬品名", "用途・役割など"],
@@ -381,9 +381,9 @@ def reset_experiment_data():
     st.session_state.wt_clarity_df = pd.DataFrame({"浄化対象の水": [""], "試作検討①": [""], "試作検討②": [""]}, index=["清澄度"])
     st.session_state.wt_coagulation_photo = None; st.session_state.wt_coagulation_text = ""
     st.session_state.wt_comparison_text = ""
-    # Questions
+    # Questions & Checks
     for k in list(st.session_state.keys()):
-        if k.startswith("設問_"): st.session_state[k] = ""
+        if k.startswith("設問_") or k.startswith("check_"): st.session_state[k] = ""
     # Clear editors
     for key in ["tools_list_editor", "references_list_editor", "melting_point_editor", "result_df_editor", "wt_clarity_editor", "fc_charge_editor", "fc_d1_editor", "fc_d2_editor", "fc_d3_editor"]:
         if key in st.session_state: del st.session_state[key]
@@ -1607,22 +1607,22 @@ with st.expander("基本情報入力", expanded=True):
             st.markdown("#### ⚠️ 実験上の注意事項（重要：確認後に✔を付けてください）")
             c1, c2 = st.columns(2)
             with c1:
-                st.checkbox(f"**👕 服装を確認**：{prec['clothing']}", key=f"check_cloth_{st.session_state.exp_title}")
+                st.checkbox(f"**👕 服装を確認**：{prec['clothing']}", key="check_cloth")
                 if "eyewear" in prec:
                     st.markdown("**🥽 保護メガネの着用基準を確認**：")
                     for i, item in enumerate(prec['eyewear'], 1):
-                        st.checkbox(f"{item}", key=f"check_eye_{i}_{st.session_state.exp_title}")
+                        st.checkbox(f"{item}", key=f"check_eye_{i}")
             with c2:
-                st.checkbox(f"**⚡ 安全上のリスクを確認**：{prec['safety_risks']}", key=f"check_s_risk_{st.session_state.exp_title}")
-                st.checkbox(f"**💻 その他リスクを確認**：{prec['other_risks']}", key=f"check_o_risk_{st.session_state.exp_title}")
+                st.checkbox(f"**⚡ 安全上のリスクを確認**：{prec['safety_risks']}", key="check_s_risk")
+                st.checkbox(f"**💻 その他リスクを確認**：{prec['other_risks']}", key="check_o_risk")
             
             st.markdown("**🛠️ 操作上の注意を一つずつ確認**：")
             for i, item in enumerate(prec['operational'], 1):
-                st.checkbox(f"{item}", key=f"check_op_{i}_{st.session_state.exp_title}")
+                st.checkbox(f"{item}", key=f"check_op_{i}")
                 
             st.markdown("**🚫 その他注意・制限事項を確認**：")
             for i, item in enumerate(prec['restrictions'], 1):
-                st.checkbox(f"{item}", key=f"check_res_{i}_{st.session_state.exp_title}")
+                st.checkbox(f"{item}", key=f"check_res_{i}")
     
     st.divider()
     st.markdown("**実験者情報**")
