@@ -265,7 +265,7 @@ def confirm_collator_data_import_dialog(uploaded_file):
                     del st.session_state[key]
             
             # 履歴の追加（誰のデータを取り込んだかを明記）
-            add_history_log("共同実験者データの同期", f"提供者: {shared_by} / 出力日: {shared_at}")
+            add_history_log("共有用ファイルの読み込み", f"提供者: {shared_by} / ファイル: {uploaded_file.name}")
             
             st.success("共同実験者のデータを取り込みました")
             st.rerun()
@@ -324,7 +324,7 @@ def perform_json_restore(uploaded_file):
             st.session_state.history_log = data["history_log"]
         
         # 復元履歴の追加
-        add_history_log("JSON復元", f"ファイル: {uploaded_file.name}")
+        add_history_log("復元用ファイルの読み込み", f"ファイル: {uploaded_file.name}")
 
         # レジストリ（全テーマのデータ）
         if "experiment_registry" in data:
@@ -875,8 +875,13 @@ with st.sidebar:
                 "last_exp_title": st.session_state.exp_title
             }
 
+            title_safe = st.session_state.exp_title.replace(" ", "_").replace("　", "_")
+            name_safe = st.session_state.student_name.replace(" ", "_").replace("　", "_")
+            timestamp = datetime.now().strftime('%Y%m%d%H%M')
+            filename_json = f"{st.session_state.student_id}_{name_safe}_{timestamp}.json"
+
             # 保存履歴の追加
-            add_history_log("保存", f"テーマ: {st.session_state.exp_title}")
+            add_history_log("復元用ファイルの保存", f"ファイル: {filename_json}")
 
             export_data = {
                 "global_info": global_info,
@@ -890,11 +895,8 @@ with st.sidebar:
                 "experiment_registry": st.session_state.experiment_registry
             }
 
-            title_safe = st.session_state.exp_title.replace(" ", "_").replace("　", "_")
-            name_safe = st.session_state.student_name.replace(" ", "_").replace("　", "_")
-            timestamp = datetime.now().strftime('%Y%m%d%H%M')
             st.session_state["json_export_data"] = json.dumps(export_data, ensure_ascii=False, indent=2)
-            st.session_state["json_file_name"] = f"{st.session_state.student_id}_{name_safe}_{timestamp}.json"
+            st.session_state["json_file_name"] = filename_json
             st.success("全てのテーマのデータ（レジストリ）を保存しました。別の実験に切り替えてもデータは保持されます。")
 
         if "json_export_data" in st.session_state:
@@ -912,8 +914,11 @@ with st.sidebar:
 
         # 出力
         if st.button("共有用データを出力 (JSON)", use_container_width=True):
+            timestamp = datetime.now().strftime('%Y%m%d%H%M')
+            filename_share = f"{st.session_state.exp_title}_共有用_{timestamp}.json"
+
             # 共有エントリの追加
-            add_history_log("共有用データの出力", f"テーマ: {st.session_state.exp_title}")
+            add_history_log("共有用ファイルの出力", f"ファイル: {filename_share}")
 
             share_data = {
                 "exp_title": st.session_state.exp_title,
@@ -932,10 +937,8 @@ with st.sidebar:
                     else:
                         share_data[k] = val
             
-            timestamp = datetime.now().strftime('%Y%m%d%H%M')
-            filename = f"{st.session_state.exp_title}_共有用_{timestamp}.json"
             st.session_state["share_json_data"] = json.dumps(share_data, ensure_ascii=False, indent=2)
-            st.session_state["share_json_filename"] = filename
+            st.session_state["share_json_filename"] = filename_share
             st.success("共有用データを作成しました。下のボタンからダウンロードしてください。")
 
         if "share_json_data" in st.session_state:
@@ -1354,16 +1357,17 @@ with st.sidebar:
                 doc.build(elements)
                 
                 # PDF出力の履歴を追加
-                add_history_log("PDFレポートの出力", f"テーマ: {st.session_state.exp_title}")
+                filename_pdf = f"{st.session_state.student_id}_{st.session_state.student_name}_{st.session_state.exp_title}.pdf".replace(" ", "_").replace("　", "_")
+                add_history_log("最終提出PDFの出力", f"ファイル: {filename_pdf}")
 
                 st.session_state["pdf_bytes"] = buffer.getvalue()
+                st.session_state["pdf_filename"] = filename_pdf
                 st.success("PDFを作成しました。ダウンロードボタンを押してください。")
             except Exception as e:
                 st.error(f"PDF作成エラー: {e}")
 
         if "pdf_bytes" in st.session_state:
-            filename_pdf = f"{st.session_state.student_id}_{st.session_state.student_name}_{st.session_state.exp_title}.pdf".replace(" ", "_").replace("　", "_")
-            st.download_button("提出用ファイルのダウンロード", st.session_state["pdf_bytes"], file_name=filename_pdf, mime="application/pdf")
+            st.download_button("提出用ファイルのダウンロード", st.session_state["pdf_bytes"], file_name=st.session_state.get("pdf_filename", "report.pdf"), mime="application/pdf")
 
     st.markdown("---")
     st.markdown("### 📜 履歴表示")
