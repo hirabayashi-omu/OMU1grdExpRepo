@@ -378,7 +378,7 @@ def reset_experiment_data():
     st.session_state.wt_proto1_water_photo = None; st.session_state.wt_proto1_text = ""
     st.session_state.wt_proto2_dev_photo = None; st.session_state.wt_proto2_water_photo = None
     st.session_state.wt_proto2_text = ""
-    st.session_state.wt_clarity_df = pd.DataFrame({"試作検討①": [""], "試作検討②": [""]}, index=["清澄度"])
+    st.session_state.wt_clarity_df = pd.DataFrame({"浄化対象の水": [""], "試作検討①": [""], "試作検討②": [""]}, index=["清澄度"])
     st.session_state.wt_coagulation_photo = None; st.session_state.wt_coagulation_text = ""
     st.session_state.wt_comparison_text = ""
     # Questions
@@ -487,6 +487,34 @@ def create_fuel_cell_graph():
     ax.grid(True)
     if has_plot:
         ax.legend()
+    return fig
+
+def create_water_treatment_graph():
+    plt.rcParams["font.family"] = "IPAexGothic"
+    fig, ax = plt.subplots(figsize=(6,4))
+    
+    df = st.session_state.wt_clarity_df
+    stages = ["浄化対象の水", "試作検討①", "試作検討②"]
+    values = []
+    
+    for s in stages:
+        if s in df.columns:
+            val = pd.to_numeric(df[s].iloc[0], errors="coerce")
+            values.append(val if not pd.isna(val) else 0)
+        else:
+            values.append(0)
+            
+    bars = ax.bar(stages, values, color=["#d62728", "#1f77b4", "#2ca02c"])
+    
+    ax.set_ylabel("清澄度[点]/1000点（水道水）")
+    ax.set_ylim(0, 1100)
+    ax.grid(True, axis='y', linestyle='--', alpha=0.7)
+    
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height + 5,
+                f'{int(height)}', ha='center', va='bottom')
+            
     return fig
 
 # -----------------------
@@ -598,6 +626,7 @@ init_state("wt_proto2_dev_photo", None)
 init_state("wt_proto2_water_photo", None)
 init_state("wt_proto2_text", "")
 init_state("wt_clarity_df", pd.DataFrame({
+    "浄化対象の水": [""],
     "試作検討①": [""],
     "試作検討②": [""]
 }, index=["清澄度"]))
@@ -1396,6 +1425,24 @@ with st.sidebar:
                     elements.append(ct)
                     elements.append(Spacer(1, 4*mm))
 
+                    # 4. 結果グラフ
+                    elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
+                    try:
+                        fig = create_water_treatment_graph()
+                        img_buffer = BytesIO()
+                        fig.savefig(img_buffer, format='png', dpi=100)
+                        img_buffer.seek(0)
+                        img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
+                        img.hAlign = 'CENTER'
+                        elements.append(img)
+                        plt.close(fig)
+                    except Exception as e:
+                        elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
+                    
+                    caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
+                    elements.append(Paragraph("図：水処理装置による浄化の効果", caption_style))
+                    elements.append(Spacer(1, 5*mm))
+
                     # 凝集剤の効果
                     elements.append(Paragraph("■ 凝集剤の効果", styles['Heading2']))
                     if st.session_state.wt_coagulation_photo:
@@ -1865,7 +1912,11 @@ with st.expander("結果グラフ", expanded=True):
         st.write(pd.DataFrame([areas], columns=["1回目(J)", "2回目(J)", "3回目(J)"], index=["発生エネルギー"]))
 
     elif st.session_state.exp_title == "実験③ 水処理装置の設計と提案":
-        st.info("グラフはありません")
+        _, col_center, _ = st.columns([1, 4, 1])
+        with col_center:
+            fig = create_water_treatment_graph()
+            st.pyplot(fig)
+            st.markdown("<div style='text-align: center;'>水処理装置による浄化の効果</div>", unsafe_allow_html=True)
 
 
 
