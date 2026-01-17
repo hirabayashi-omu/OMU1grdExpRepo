@@ -813,22 +813,126 @@ def calculate_achievement_rate():
 # ページ設定
 # -----------------------
 st.set_page_config(page_title="実験レポート作成", layout="wide")
+
+# カスタムCSSでヘッダーをリッチなデザインに
 st.markdown("""
-    <div style='text-align: center; margin-bottom: 20px;'>
-        <h2 style='margin:0; font-size: 1.8em;'>🧪 総合工学システム実習 レポート作成（M2）</h2>
-        <p style='margin:5px 0 0 0; font-size: 1.0em; color: gray;'>（大阪公立大学工業高等専門学校 1年）</p>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+    .main-header {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        padding: 2.5rem 1rem;
+        border-radius: 24px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* 装飾用の光の輪 */
+    .main-header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .main-header::after {
+        content: "";
+        position: absolute;
+        bottom: -20%;
+        left: -5%;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .main-header h1 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 700;
+        background: linear-gradient(to right, #f8fafc, #cbd5e1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.02em;
+    }
+
+    .main-header p {
+        margin: 0.8rem 0 0 0;
+        font-size: 1.1rem;
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+    .school-badge {
+        display: inline-block;
+        padding: 0.4rem 1.2rem;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        font-size: 0.9rem;
+        color: #e2e8f0;
+        margin-top: 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: 700;
+        letter-spacing: 0.05em;
+    }
+
+    .module-tag {
+        color: #818cf8;
+        font-weight: 700;
+        margin-left: 0.5rem;
+    }
+    </style>
+
+    <div class="main-header">
+        <h1>🧪 総合工学システム実習 <span style="-webkit-text-fill-color: #94a3b8; font-weight:400;">レポート作成</span></h1>
+        <p>大阪公立大学工業高等専門学校 1年</p>
+        <div class="school-badge">
+            ACADEMIC MODULE <span class="module-tag">M2</span>
+        </div>
     </div>
 """, unsafe_allow_html=True)
 
 # -----------------------
 # サイドバー
 # -----------------------
-# -----------------------
-# サイドバー
-# -----------------------
 with st.sidebar:
     st.header("⚙️ 操作メニュー")
     st.info("💡 **入力のヒント**：\n各項目は入力後に **Enterキー** を押すか、ボックス外をクリックすると確定・反映されます。")
+
+    # ヘルプ・ガイドの追加（吹き出し方式）
+    with st.popover("❓ ヘルプ：操作メニューの使いかた", use_container_width=True):
+        st.markdown("""
+        各メニューの目的とデータの保存範囲をご案内します。
+
+        **① 作業状態の保存・復元**
+        *   **目的**: 自分の作業を中断・再開するための自分専用バックアップです。
+        *   **保存範囲**: **全テーマ（①〜③）の全データ**、更新履歴。
+        *   **注意**: 復元すると、今画面上で入力している内容はすべて消去され、ファイルの状態に上書きされます。
+
+        **② 共有データの出力・復元**
+        *   **目的**: 班員と「実験データ」のみを共有・同期します。
+        *   **保存範囲**: **現在選択中のテーマのみ**。「実験方法」と「実験結果」に特化しています。
+        *   **保持される範囲**: あなたの基本情報、調査レポート、考察は上書きされず、そのまま残ります。
+
+        **③ 最終提出用PDF出力**
+        *   **目的**: 完成したレポートを提出するための正式なファイルを作成します。
+        *   **注意**: PDFを出力しても作業状態は保存されません。必ず「① 復元用ファイルの保存」も併せて行ってください。
+        *   **原則**: **PDFは必ず、自分自身の端末（自分の氏名・学籍番号が入力された状態）で作成したものを提出してください。**
+
+        **⚠️ 共通の注意事項**
+        *   年度やクラス設定が異なるデータを取り込もうとすると警告が出ます。
+        *   他人の「作業状態」ファイルを自分のものとして復元すると、履歴に証跡が残るため注意してください。
+        """)
 
     st.markdown("---")
     st.markdown("### 🚀 プロセス")
@@ -964,6 +1068,7 @@ with st.sidebar:
     # 3. 最終提出用PDF出力
     with st.container(border=True):
         st.markdown("#### ③ 最終提出用PDF出力")
+        st.markdown("<span style='color:#ef4444; font-weight:700; font-size:0.9em;'>⚠️ 自身が作成したデータを提出してください。</span>", unsafe_allow_html=True)
         
         st.markdown("**PDF作成**")
         if st.button("提出用ファイルの作成"):
@@ -1391,7 +1496,7 @@ with st.expander("基本情報入力", expanded=True):
             st.session_state.exp_title_selector = st.session_state.exp_title
 
         selected_title = st.selectbox(
-            "実験タイトル",
+            "**実験タイトル**",
             list(QUESTION_DICT.keys()),
             key="exp_title_selector",
             help="実験のテーマを選択してください"
@@ -1409,6 +1514,7 @@ with st.expander("基本情報入力", expanded=True):
         )
     
     st.divider()
+    st.markdown("**実験者情報**")
     
     # 2段目：本人の席番号、出席番号、氏名
     r2_col1, r2_col2, r2_col3 = st.columns([1, 1, 3])
