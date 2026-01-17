@@ -266,7 +266,7 @@ def create_graph():
              if valid_indices.any():
                 ax.plot(x[valid_indices], y[valid_indices], marker="o", label=label, color=color)
                 legend_labels.append(label)
-
+    ax.set_xlabel("パイプ端からの距離(cm)")
     ax.set_ylabel("融解時間 (sec)")
     ax.grid(True)
     if legend_labels:
@@ -1230,7 +1230,7 @@ if st.session_state.exp_title == "実験① 熱の可視化":
 
         st.divider()
 
-        st.markdown("#### 金属棒ごとの融解時間")
+        st.markdown("#### 金属パイプごとのろうの融解時間")
         st.caption("※ 距離(cm)は、アルミパイプ、銅パイプ、ステンレスパイプ（SUS304）の加熱端からの距離です。")
         st.caption("各距離におけるロウの融解時間を秒単位で入力してください。")
         edited_df = st.data_editor(
@@ -1463,6 +1463,7 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
+
 
 
 
