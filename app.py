@@ -117,25 +117,6 @@ def apply_exp_state(state):
             # 各キーごとのデフォルト処理（簡易化のためresetの一部を流用）
             pass # 必要なら個別実装
 
-def is_field_empty(key_or_val):
-    """フィールドが空かどうか判定する"""
-    if isinstance(key_or_val, str):
-        val = st.session_state.get(key_or_val) if key_or_val in st.session_state else key_or_val
-        return not val or str(val).strip() == ""
-    elif isinstance(key_or_val, (pd.DataFrame, list)):
-        if isinstance(key_or_val, pd.DataFrame):
-            # 全セルが空かチェック（数値型以外で判定）
-            return key_or_val.replace("", pd.NA).isnull().all().all()
-        return len(key_or_val) == 0
-    return key_or_val is None
-
-def status_indicator(is_empty):
-    """ステータス表示用マーク"""
-    if is_empty:
-        return "<span style='color:#f87171; font-weight:700; font-size:0.85em; margin-left:8px;'>📍未入力</span>"
-    else:
-        return "<span style='color:#4ade80; font-weight:700; font-size:0.85em; margin-left:8px;'>✔入力済</span>"
-
 @st.dialog("⚠️ 実験タイトルの切り替え")
 def confirm_exp_title_change_dialog(new_title):
     st.warning(f"実験タイトルを「{new_title}」に切り替えますか？")
@@ -1682,14 +1663,11 @@ with st.expander("基本情報入力", expanded=True):
     # 2段目：本人の席番号、出席番号、氏名
     r2_col1, r2_col2, r2_col3 = st.columns([1, 1, 3])
     with r2_col1:
-        st.markdown(f"席番号 {status_indicator(is_field_empty('seat_number'))}", unsafe_allow_html=True)
-        st.text_input("席番号", key="seat_number", help="自分の席番号を入力してください", label_visibility="collapsed")
+        st.text_input("席番号", key="seat_number", help="自分の席番号を入力してください")
     with r2_col2:
-        st.markdown(f"出席番号 {status_indicator(is_field_empty('student_id'))}", unsafe_allow_html=True)
-        st.text_input("出席番号", key="student_id", help="自分の出席番号を入力してください", label_visibility="collapsed")
+        st.text_input("出席番号", key="student_id", help="自分の出席番号を入力してください")
     with r2_col3:
-        st.markdown(f"氏名 {status_indicator(is_field_empty('student_name'))}", unsafe_allow_html=True)
-        st.text_input("氏名", key="student_name", help="自分の氏名を入力してください", label_visibility="collapsed")
+        st.text_input("氏名", key="student_name", help="自分の氏名を入力してください")
 
     # 3段目：共同実験者①、②
     r3_col1, r3_col2, r3_col3, r3_col4 = st.columns([1, 2, 1, 2])
@@ -1784,46 +1762,14 @@ with st.expander("実験方法", expanded=True):
         )
 
 # -----------------------
+# -----------------------
 # 実験結果入力
 # -----------------------
 st.markdown("### 実験結果入力")
 
-# テーマ別入力状況サマリー
-prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
-with st.container(border=True):
-    st.markdown(f"**📝 {st.session_state.exp_title}：入力チェック**")
-    status_cols = st.columns(4)
-    if st.session_state.exp_title == "実験① 熱の可視化":
-        items = [
-            ("準備(写真/評価法)", is_field_empty("apparatus_photo_data") or is_field_empty("evaluation_method")),
-            ("内容(融解温度)", is_field_empty(st.session_state.melting_point_df)),
-            ("内容(実験データ)", is_field_empty(st.session_state.result_df)),
-            ("考察", is_field_empty("comparison_text"))
-        ]
-    elif st.session_state.exp_title == "実験② アルカリ型燃料電池の組み立て":
-        items = [
-            ("準備(写真/評価法)", is_field_empty("apparatus_photo_data") or is_field_empty("evaluation_method")),
-            ("内容(充電データ)", is_field_empty(st.session_state.fc_charge_df)),
-            ("内容(放電データ)", is_field_empty(st.session_state.fc_discharge_1)),
-            ("考察", is_field_empty("fc_comparison_text"))
-        ]
-    else: # 実験③
-        proto1_empty = is_field_empty("wt_proto1_dev_photo") or is_field_empty("wt_proto1_text")
-        proto2_empty = is_field_empty("wt_proto2_dev_photo") or is_field_empty("wt_proto2_text")
-        items = [
-            ("試作①", proto1_empty),
-            ("試作②", proto2_empty),
-            ("清澄度/凝集剤", is_field_empty(st.session_state.wt_clarity_df)),
-            ("比較・考察", is_field_empty("wt_comparison_text"))
-        ]
-    
-    for i, (label, is_empty) in enumerate(items):
-        with status_cols[i]:
-            st.markdown(f"{label} {status_indicator(is_empty)}", unsafe_allow_html=True)
-
 if st.session_state.exp_title == "実験① 熱の可視化":
     with st.expander("実験結果（熱の可視化）", expanded=True):
-        st.markdown(f"#### ロウ（流動パラフィン）の融解温度 {status_indicator(is_field_empty(st.session_state.melting_point_df))}", unsafe_allow_html=True)
+        st.markdown("#### ロウ（流動パラフィン）の融解温度")
         st.caption("前実験での測定値を入力してください。平均は自動計算されます。")
         
         # 融解温度データエディタ
