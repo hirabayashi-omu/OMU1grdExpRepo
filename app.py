@@ -109,7 +109,10 @@ def apply_exp_state(state):
                     df = pd.DataFrame(columns=df_cols[k])
                 st.session_state[k] = df
             else:
-                st.session_state[k] = v
+                if k.startswith("check_") and not isinstance(v, bool):
+                    st.session_state[k] = False
+                else:
+                    st.session_state[k] = v
     
     # ロードされなかったキーはデフォルトに戻す
     for k in EXP_DATA_KEYS:
@@ -383,7 +386,8 @@ def reset_experiment_data():
     st.session_state.wt_comparison_text = ""
     # Questions & Checks
     for k in list(st.session_state.keys()):
-        if k.startswith("設問_") or k.startswith("check_"): st.session_state[k] = ""
+        if k.startswith("設問_"): st.session_state[k] = ""
+        if k.startswith("check_"): st.session_state[k] = False
     # Clear editors
     for key in ["tools_list_editor", "references_list_editor", "melting_point_editor", "result_df_editor", "wt_clarity_editor", "fc_charge_editor", "fc_d1_editor", "fc_d2_editor", "fc_d3_editor"]:
         if key in st.session_state: del st.session_state[key]
@@ -1625,6 +1629,11 @@ with st.expander("基本情報入力", expanded=True):
         )
     
     # 実験ごとの注意事項（重要）
+    # ステート修復（不適切な型によるTypeError防止）
+    for k in list(st.session_state.keys()):
+        if k.startswith("check_") and not isinstance(st.session_state[k], bool):
+            st.session_state[k] = False
+
     prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
     if prec:
         with st.container(border=True):
