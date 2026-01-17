@@ -30,6 +30,13 @@ rcParams["font.family"] = "IPAexGothic"
 # ダイアログ・共通処理
 # -----------------------
 
+def get_academic_year(d):
+    """日付から年度（4月始まり）を取得する"""
+    if d.month >= 4:
+        return d.year
+    else:
+        return d.year - 1
+
 # テーマごとに管理するデータキー
 EXP_DATA_KEYS = [
     "tools_list", "references_list", "evaluation_method",
@@ -37,6 +44,32 @@ EXP_DATA_KEYS = [
     "fc_charge_df", "fc_discharge_1", "fc_discharge_2", "fc_discharge_3", "fc_comparison_text",
     "wt_original_water_photo", "wt_proto1_dev_photo", "wt_proto1_water_photo", "wt_proto1_text", "wt_proto2_dev_photo", "wt_proto2_water_photo", "wt_proto2_text", "wt_clarity_df", "wt_coagulation_photo", "wt_coagulation_text", "wt_comparison_text"
 ]
+
+# 共同実験者と共有するデータキー（①実験方法、②実験結果入力）
+SHARE_DATA_KEYS = [
+    "tools_list", "evaluation_method", "apparatus_photo_data",
+    "melting_point_df", "result_df",
+    "fc_charge_df", "fc_discharge_1", "fc_discharge_2", "fc_discharge_3",
+    "wt_original_water_photo", "wt_proto1_dev_photo", "wt_proto1_water_photo", "wt_proto1_text",
+    "wt_proto2_dev_photo", "wt_proto2_water_photo", "wt_proto2_text", "wt_clarity_df",
+    "wt_coagulation_photo", "wt_coagulation_text"
+]
+
+def add_history_log(action, detail=""):
+    """更新履歴にエントリを追加する"""
+    if "history_log" not in st.session_state:
+        st.session_state.history_log = []
+    
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    user_info = f"{st.session_state.get('student_id', '??')} {st.session_state.get('student_name', '??')}"
+    
+    entry = {
+        "timestamp": timestamp,
+        "user": user_info,
+        "action": action,
+        "detail": detail
+    }
+    st.session_state.history_log.append(entry)
 
 def get_current_exp_state():
     """現在のテーマに関連するステートを辞書にまとめる"""
@@ -115,13 +148,156 @@ def confirm_exp_title_change_dialog(new_title):
 
 @st.dialog("⚠️ JSONからの復元")
 def confirm_json_restore_dialog(uploaded_file):
-    st.warning("ファイルを読み込んで復元しますか？")
-    st.markdown("**現在入力している内容はすべて上書きされます。**")
-    col1, col2 = st.columns(2)
-    if col1.button("復元を実行", use_container_width=True):
-        perform_json_restore(uploaded_file)
-        st.rerun()
-    if col2.button("キャンセル", use_container_width=True):
+    try:
+        # 情報を確認するために一度パース
+        uploaded_file.seek(0)
+        data = json.load(uploaded_file)
+        
+        g = data.get("global_info", {})
+        saved_year = g.get("academic_year")
+        saved_class = g.get("class_name")
+        current_year = get_academic_year(st.session_state.exp_date)
+        current_class = st.session_state.class_name
+        
+        has_mismatch = False
+        if (saved_year and saved_year != current_year) or (saved_class and saved_class != current_class):
+            has_mismatch = True
+            st.error("⚠️ **重要：クラスまたは年度の不一致**")
+            if saved_year and saved_year != current_year:
+                st.markdown(f"・**年度**: 保存データは **{saved_year}年度** です（現在は {current_year}年度）")
+            if saved_class and saved_class != current_class:
+                st.markdown(f"・**クラス**: 保存データは **{saved_class}** です（現在は {current_class}）")
+            st.markdown("過去のデータや他クラスのデータを復元すると、管理上の不整合が生じる恐れがあります。")
+        
+        st.warning("ファイルを読み込んで復元しますか？")
+        st.markdown("**現在入力している内容はすべて上書きされます。**")
+        
+        col1, col2 = st.columns(2)
+        if col1.button("復元を実行", use_container_width=True):
+            # perform_json_restore内で再度seek(0)されるが念のため
+            uploaded_file.seek(0)
+            perform_json_restore(uploaded_file)
+            st.rerun()
+        if col2.button("キャンセル", use_container_width=True):
+            st.rerun()
+    except Exception as e:
+        st.error(f"ファイル解析エラー: {e}")
+
+@st.dialog("⚠️ 共同実験者データの同期")
+def confirm_collator_data_import_dialog(uploaded_file):
+    try:
+        # file_uploaderのポインタを先頭に戻す
+        uploaded_file.seek(0)
+        data = json.load(uploaded_file)
+        shared_title = data.get("exp_title", "不明")
+        shared_by = data.get("shared_by", "不明")
+        shared_at = data.get("shared_at", "不明")
+        origin_created_at = data.get("origin_info", {}).get("created_at", "不明")
+        current_title = st.session_state.exp_title
+        
+        # 年度・クラスのチェック
+        g = data.get("global_info", {}) 
+        saved_year = data.get("academic_year") or g.get("academic_year")
+        saved_class = data.get("class_name") or g.get("class_name")
+        current_year = get_academic_year(st.session_state.exp_date)
+        current_class = st.session_state.class_name
+
+        st.info(f"共同実験者の「{shared_title}」のデータを取り込みます。")
+        
+        # 共有者情報の表示
+        with st.container(border=True):
+            st.markdown("**【共有データ情報】**")
+            st.write(f"👤 **データ共有者**: {shared_by}")
+            st.write(f"📅 **データ出力日時**: {shared_at}")
+            st.write(f"🌱 **オリジナル作成日**: {origin_created_at}")
+
+        if (saved_year and saved_year != current_year) or (saved_class and saved_class != current_class):
+            st.error("⚠️ **警告：属性の不一致**")
+            if saved_year and saved_year != current_year:
+                st.markdown(f"・**年度**: 共有データは **{saved_year}年度** です（現在は {current_year}年度）")
+            if saved_class and saved_class != current_class:
+                st.markdown(f"・**クラス**: 共有データは **{saved_class}** です（現在は {current_class}）")
+            st.markdown("同一クラス内での共有を想定しています。内容を確認してください。")
+
+        st.warning("以下の範囲のデータが上書きされます。よろしいですか？")
+        
+        st.markdown(f"""
+        **【上書きされる範囲】**
+        1. **実験方法**（使用器具、装置写真、評価方法）
+        2. **実験結果入力**（各実験のデータ表、実験中の写真・メモ）
+
+        **【保持される範囲】**
+        - 基本情報（氏名、学籍番号など）
+        - 調査レポート（設問回答、参考文献）
+        - 比較検証と考察（本文、文献値）
+        """)
+        
+        if shared_title != current_title:
+            st.error(f"⚠️ 注意: 取り込むデータは「{shared_title}」のものですが、現在は「{current_title}」を開いています。")
+
+        col1, col2 = st.columns(2)
+        if col1.button("上書きを実行", use_container_width=True):
+            # データの反映
+            for k in SHARE_DATA_KEYS:
+                if k in data:
+                    v = data[k]
+                    # DataFrameの復元
+                    df_cols = {
+                        "tools_list": ["器具・装置・薬品名", "用途・役割など"],
+                        "melting_point_df": None, "result_df": None,
+                        "fc_charge_df": None, "fc_discharge_1": None, 
+                        "fc_discharge_2": None, "fc_discharge_3": None,
+                        "wt_clarity_df": None
+                    }
+                    if k in df_cols:
+                        df = pd.DataFrame(v)
+                        if df_cols[k] and df.empty:
+                            df = pd.DataFrame(columns=df_cols[k])
+                        st.session_state[k] = df
+                    else:
+                        st.session_state[k] = v
+            
+            # エディタのキャッシュを削除
+            for key in ["tools_list_editor", "melting_point_editor", "result_df_editor", 
+                        "wt_clarity_editor", "fc_charge_editor", "fc_d1_editor", 
+                        "fc_d2_editor", "fc_d3_editor"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            
+            # 履歴の追加（誰のデータを取り込んだかを明記）
+            add_history_log("共同実験者データの同期", f"提供者: {shared_by} / 出力日: {shared_at}")
+            
+            st.success("共同実験者のデータを取り込みました")
+            st.rerun()
+        if col2.button("キャンセル", use_container_width=True):
+            st.rerun()
+    except Exception as e:
+        st.error(f"読み込みエラー: {e}")
+
+@st.dialog("📄 レポート作成・更新履歴")
+def show_history_dialog():
+    origin = st.session_state.get("origin_info", {"created_at": "-", "created_by_id": "-", "created_by_name": "-"})
+    st.markdown(f"### **【オリジナル作成者】**")
+    st.caption("このデータが最初に作成された際の情報です。")
+    st.write(f"📅 **作成日時**: {origin['created_at']}")
+    st.write(f"👤 **作成者**: {origin['created_by_id']} {origin['created_by_name']}")
+    
+    st.divider()
+    st.markdown(f"### **【更新・同期履歴】**")
+    if not st.session_state.get("history_log"):
+        st.write("履歴はありません。")
+    else:
+        # 履歴が多い場合に備えてスクロール可能にするコンテナ
+        with st.container(height=400):
+            for entry in reversed(st.session_state.history_log):
+                with st.container(border=True):
+                    st.caption(f"🕒 {entry['timestamp']}")
+                    st.markdown(f"**{entry['action']}**")
+                    st.markdown(f"_{entry['user']}_")
+                    if entry['detail']:
+                        st.caption(entry['detail'])
+    
+    if st.button("閉じる", use_container_width=True):
         st.rerun()
 
 def perform_json_restore(uploaded_file):
@@ -140,6 +316,15 @@ def perform_json_restore(uploaded_file):
             if "partner1_name" in g: st.session_state.partner1_name = g["partner1_name"]
             if "partner2_id" in g: st.session_state.partner2_id = g["partner2_id"]
             if "partner2_name" in g: st.session_state.partner2_name = g["partner2_name"]
+
+        # 履歴とオリジン情報の復元
+        if "origin_info" in data:
+            st.session_state.origin_info = data["origin_info"]
+        if "history_log" in data:
+            st.session_state.history_log = data["history_log"]
+        
+        # 復元履歴の追加
+        add_history_log("JSON復元", f"ファイル: {uploaded_file.name}")
 
         # レジストリ（全テーマのデータ）
         if "experiment_registry" in data:
@@ -314,10 +499,43 @@ init_state("class_name", "1年1組")
 init_state("seat_number", "00")
 init_state("student_id", "00")
 init_state("student_name", "高専 太郎")
+
+# 履歴とオリジン情報（初期化）
+if "origin_info" not in st.session_state:
+    st.session_state.origin_info = {
+        "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "created_by_id": st.session_state.student_id,
+        "created_by_name": st.session_state.student_name
+    }
+if "history_log" not in st.session_state:
+    st.session_state.history_log = []
+    add_history_log("初期作成", "新規レポート作成開始")
+
 init_state("partner1_id", "")
 init_state("partner1_name", "")
 init_state("partner2_id", "")
 init_state("partner2_name", "")
+
+# ユーザーの特定と履歴への反映
+current_user_id = st.session_state.student_id
+current_user_name = st.session_state.student_name
+current_user_full = f"{current_user_id} {current_user_name}"
+
+# 初期作成者がデフォルト（高専 太郎）のままの場合、最初に入力したユーザーを真の作成者とする
+if st.session_state.origin_info["created_by_id"] == "00" and current_user_id != "00":
+    st.session_state.origin_info["created_by_id"] = current_user_id
+    st.session_state.origin_info["created_by_name"] = current_user_name
+    add_history_log("作成者確定", f"初期値から実際のユーザーに更新されました: {current_user_full}")
+
+# 編集者の切り替えを検知してログに記録
+if "last_logged_user" not in st.session_state:
+    st.session_state.last_logged_user = current_user_full
+
+if current_user_full != st.session_state.last_logged_user:
+    # デフォルトユーザーからの変更は「作成者確定」でログ済みなので、それ以外の変更を記録
+    if st.session_state.last_logged_user != "00 高専 太郎":
+        add_history_log("ユーザー切り替え", f"編集者が {st.session_state.last_logged_user} から {current_user_full} に変更されました")
+    st.session_state.last_logged_user = current_user_full
 init_state("tools_list", pd.DataFrame(columns=["器具・装置・薬品名", "用途・役割など"]))
 init_state("evaluation_method", "")
 init_state("melting_point_df", pd.DataFrame({
@@ -609,16 +827,18 @@ st.markdown("""
 # サイドバー
 # -----------------------
 with st.sidebar:
-    st.header("操作メニュー")
-    
+    st.header("⚙️ 操作メニュー")
     st.info("💡 **入力のヒント**：\n各項目は入力後に **Enterキー** を押すか、ボックス外をクリックすると確定・反映されます。")
 
-    # 1. 入力状態の復元／保存
+    st.markdown("---")
+    st.markdown("### 🚀 プロセス")
+
+    # 1. 作業状態の保存・復元
     with st.container(border=True):
-        st.markdown("#### ① 入力状態の復元／保存")
+        st.markdown("#### ① 作業状態の保存・復元")
         
         # JSON復元
-        st.markdown("**JSONから復元**")
+        st.markdown("**復元用ファイルの読み込み**")
         uploaded_file = st.file_uploader("ファイルをアップロード", type="json", key="json_loader", label_visibility="collapsed")
 
         if uploaded_file is not None:
@@ -631,7 +851,7 @@ with st.sidebar:
         st.divider()
 
         # JSON保存
-        st.markdown("**JSON保存**")
+        st.markdown("**復元用ファイルの保存**")
         if st.button("現在の入力状態を保存"):
             # 現在のタイトルのデータを最新にするため、レジストリを更新
             if "experiment_registry" not in st.session_state:
@@ -643,6 +863,7 @@ with st.sidebar:
             # 基本情報
             global_info = {
                 "exp_date": st.session_state.exp_date.isoformat(),
+                "academic_year": get_academic_year(st.session_state.exp_date),
                 "class_name": st.session_state.class_name,
                 "seat_number": st.session_state.seat_number,
                 "student_id": st.session_state.student_id,
@@ -654,8 +875,13 @@ with st.sidebar:
                 "last_exp_title": st.session_state.exp_title
             }
 
+            # 保存履歴の追加
+            add_history_log("保存", f"テーマ: {st.session_state.exp_title}")
+
             export_data = {
                 "global_info": global_info,
+                "origin_info": st.session_state.get("origin_info", {}),
+                "history_log": st.session_state.get("history_log", []),
                 "achievement_at_save": {
                     "home": home_score,
                     "report": report_score,
@@ -679,9 +905,62 @@ with st.sidebar:
                 mime="application/json"
             )
 
-    # 2. 実験結果のまとめ
+    # 2. 共有データの出力・復元
     with st.container(border=True):
-        st.markdown("#### ② 提出用ファイル")
+        st.markdown("#### ② 共有データの出力・復元")
+        st.caption("①実験方法 と ②実験結果入力 のデータのみを共有します。")
+
+        # 出力
+        if st.button("共有用データを出力 (JSON)", use_container_width=True):
+            # 共有エントリの追加
+            add_history_log("共有用データの出力", f"テーマ: {st.session_state.exp_title}")
+
+            share_data = {
+                "exp_title": st.session_state.exp_title,
+                "academic_year": get_academic_year(st.session_state.exp_date),
+                "class_name": st.session_state.class_name,
+                "shared_by": f"{st.session_state.student_id} {st.session_state.student_name}",
+                "shared_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "origin_info": st.session_state.get("origin_info", {}),
+                "history_log": st.session_state.get("history_log", [])
+            }
+            for k in SHARE_DATA_KEYS:
+                if k in st.session_state:
+                    val = st.session_state[k]
+                    if isinstance(val, pd.DataFrame):
+                        share_data[k] = val.to_dict(orient="records")
+                    else:
+                        share_data[k] = val
+            
+            timestamp = datetime.now().strftime('%Y%m%d%H%M')
+            filename = f"{st.session_state.exp_title}_共有用_{timestamp}.json"
+            st.session_state["share_json_data"] = json.dumps(share_data, ensure_ascii=False, indent=2)
+            st.session_state["share_json_filename"] = filename
+            st.success("共有用データを作成しました。下のボタンからダウンロードしてください。")
+
+        if "share_json_data" in st.session_state:
+            st.download_button(
+                "共有用データのダウンロード",
+                data=st.session_state["share_json_data"],
+                file_name=st.session_state["share_json_filename"],
+                mime="application/json",
+                use_container_width=True
+            )
+        
+        st.divider()
+
+        # 読み込み
+        st.markdown("**共有用データの読み込み**")
+        share_file = st.file_uploader("共有用JSONをアップロード", type="json", key="share_json_loader", label_visibility="collapsed")
+        if share_file is not None:
+            if st.button("共同実験者のデータを読み込む", use_container_width=True):
+                # ここでポインタを確認（念のため）
+                share_file.seek(0)
+                confirm_collator_data_import_dialog(share_file)
+
+    # 3. 最終提出用PDF出力
+    with st.container(border=True):
+        st.markdown("#### ③ 最終提出用PDF出力")
         
         st.markdown("**PDF作成**")
         if st.button("提出用ファイルの作成"):
@@ -740,11 +1019,13 @@ with st.sidebar:
                 if not st.session_state.references_list.empty:
                     ref_data = [["書籍名・サイト名", "著者・発行者", "発行年・URL"]]
                     ref_dict = st.session_state.references_list.to_dict(orient="records")
+                    # テーブル内での改行を有効にするためParagraphを使用
+                    table_cell_style = ParagraphStyle('TableCellStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=9, leading=11)
                     for item in ref_dict:
                          ref_data.append([
-                             item.get("書籍名・サイト名", ""),
-                             item.get("著者・発行者", ""),
-                             item.get("発行年・URL", "")
+                             Paragraph(str(item.get("書籍名・サイト名", "")), table_cell_style),
+                             Paragraph(str(item.get("著者・発行者", "")), table_cell_style),
+                             Paragraph(str(item.get("発行年・URL", "")), table_cell_style)
                          ])
                     
                     if len(ref_data) > 1:
@@ -768,11 +1049,15 @@ with st.sidebar:
                 elements.append(Paragraph("【使用器具】", styles['Normal']))
                 tools_data = [["器具・装置・薬品名", "用途・役割など"]]
                 tools_dict = st.session_state.tools_list.to_dict(orient="records")
+                table_cell_style = ParagraphStyle('TableCellStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=9, leading=11)
                 for item in tools_dict:
                     # 新旧カラム名の両対応（旧名がある場合はそちらを使用）
                     name = item.get("器具・装置・薬品名", item.get("器具名", ""))
                     role = item.get("用途・役割など", item.get("役割", ""))
-                    tools_data.append([name, role])
+                    tools_data.append([
+                        Paragraph(str(name), table_cell_style),
+                        Paragraph(str(role), table_cell_style)
+                    ])
                 
                 if len(tools_data) > 1:
                     t = Table(tools_data, colWidths=[60*mm, 100*mm])
@@ -1030,8 +1315,47 @@ with st.sidebar:
                     elements.append(Paragraph("【装置の比較（試作① vs 試作②）】", styles['Normal']))
                     elements.append(Paragraph(st.session_state.wt_comparison_text, styles['Normal']))
 
+
+                # -----------------------
+                # 6. 更新履歴（コピペ防止・証跡）
+                # -----------------------
+                elements.append(Spacer(1, 10*mm))
+                elements.append(Paragraph("6. レポート作成・更新履歴", styles['Heading2']))
+                
+                origin = st.session_state.get("origin_info", {"created_at": "-", "created_by_id": "-", "created_by_name": "-"})
+                elements.append(Paragraph(f"【オリジナル作成情報】", styles['Normal']))
+                elements.append(Paragraph(f"作成日時: {origin['created_at']}", styles['Normal']))
+                elements.append(Paragraph(f"作成者: {origin['created_by_id']} {origin['created_by_name']}", styles['Normal']))
+                elements.append(Spacer(1, 3*mm))
+
+                elements.append(Paragraph(f"【履歴一覧】", styles['Normal']))
+                table_history_style = ParagraphStyle('TableHistoryStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=7, leading=8)
+                history_data = [["日時", "操作内容", "詳細・備考", "実行ユーザー"]]
+                for entry in st.session_state.get("history_log", []):
+                    history_data.append([
+                        Paragraph(str(entry.get("timestamp", "")), table_history_style),
+                        Paragraph(str(entry.get("action", "")), table_history_style),
+                        Paragraph(str(entry.get("detail", "")), table_history_style),
+                        Paragraph(str(entry.get("user", "")), table_history_style)
+                    ])
+                
+                if len(history_data) > 1:
+                    ht = Table(history_data, colWidths=[35*mm, 45*mm, 55*mm, 30*mm])
+                    ht.setStyle(TableStyle([
+                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                        ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+                        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                        ('FONTSIZE', (0,0), (-1,-1), 7),
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                    ]))
+                    elements.append(ht)
+
                 doc.build(elements)
                 
+                # PDF出力の履歴を追加
+                add_history_log("PDFレポートの出力", f"テーマ: {st.session_state.exp_title}")
+
                 st.session_state["pdf_bytes"] = buffer.getvalue()
                 st.success("PDFを作成しました。ダウンロードボタンを押してください。")
             except Exception as e:
@@ -1040,6 +1364,15 @@ with st.sidebar:
         if "pdf_bytes" in st.session_state:
             filename_pdf = f"{st.session_state.student_id}_{st.session_state.student_name}_{st.session_state.exp_title}.pdf".replace(" ", "_").replace("　", "_")
             st.download_button("提出用ファイルのダウンロード", st.session_state["pdf_bytes"], file_name=filename_pdf, mime="application/pdf")
+
+    st.markdown("---")
+    st.markdown("### 📜 履歴表示")
+    # 4. 更新履歴の表示
+    with st.container(border=True):
+        st.markdown("#### 更新履歴の表示")
+        st.caption("作成者情報と全操作ログを確認できます。")
+        if st.button("履歴を表示する", use_container_width=True):
+            show_history_dialog()
 
 # -----------------------
 # 基本情報入力
@@ -1463,7 +1796,6 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
-
 
 
 
