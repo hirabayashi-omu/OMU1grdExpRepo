@@ -1084,10 +1084,12 @@ with st.sidebar:
     with st.container(border=True):
         st.subheader("③ 最終提出用PDF出力", help="""
         **提出用ファイルの作成（PDF）**
-        ・PDF出力では作業状態は保存されません。必ず①の保存も行ってください。
-        ・PDFは必ず「自分の端末」で作成したものを提出すること。
+        ・期限: 特段の指示がなければ「次の実験日」まで
+        ・PDF出力では作業状態は保存されません。必ず①の保存も！
+        ・PDFは必ず「自分の端末」で作成したものを提出。
         """)
         st.markdown("<span style='color:#ef4444; font-weight:700; font-size:0.9em;'>⚠️ 自身が作成したデータを提出してください。</span>", unsafe_allow_html=True)
+        st.caption("※提出期限：特段の指示がなければ「次の実験日」まで")
         
         st.markdown("**PDF作成**")
         if st.button("提出用ファイルの作成"):
