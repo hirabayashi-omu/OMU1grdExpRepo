@@ -260,6 +260,12 @@ def confirm_collator_data_import_dialog(uploaded_file):
                     else:
                         st.session_state[k] = v
             
+            # 安全確認チェックの反映
+            for k, v in data.items():
+                if k.startswith("check_"):
+                    # 型チェック（bool以外はFalseに倒す）
+                    st.session_state[k] = v if isinstance(v, bool) else False
+            
             # エディタのキャッシュを削除
             for key in ["tools_list_editor", "melting_point_editor", "result_df_editor", 
                         "wt_clarity_editor", "fc_charge_editor", "fc_d1_editor", 
@@ -1124,6 +1130,11 @@ with st.sidebar:
                         share_data[k] = val.to_dict(orient="records")
                     else:
                         share_data[k] = val
+            
+            # 安全確認チェックも共有に含める
+            for k, v in st.session_state.items():
+                if k.startswith("check_"):
+                    share_data[k] = v
             
             st.session_state["share_json_data"] = json.dumps(share_data, ensure_ascii=False, indent=2)
             st.session_state["share_json_filename"] = filename_share
