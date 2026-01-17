@@ -894,7 +894,7 @@ st.markdown("""
     </style>
 
     <div class="main-header">
-        <h1>🧪 総合工学システム実習 <span style="-webkit-text-fill-color: #94a3b8; font-weight:400;">レポート作成</span></h1>
+        <h1>🧪 総合工学システム実習 <span style="-webkit-text-fill-color: #94a3b8; font-weight:400;">M2レポート作成システム</span></h1>
         <p>大阪公立大学工業高等専門学校 1年</p>
         <div class="school-badge">
             ACADEMIC MODULE <span class="module-tag">M2</span>
