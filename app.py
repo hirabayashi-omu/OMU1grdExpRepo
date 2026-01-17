@@ -654,6 +654,53 @@ QUESTION_DICT = {
         "作製した装置で工夫したポイント": []
     }
 }
+
+SAFETY_PRECAUTIONS = {
+    "実験① 熱の可視化": {
+        "clothing": "作業着または白衣（保護メガネ不要）",
+        "safety_risks": "火傷・火災（ガスバーナーの火炎や溶けたロウによる）",
+        "other_risks": "パソコンと実験装置の距離を取ること",
+        "operational": ["加熱物は放熱板の上で取り扱うこと", "作業範囲は整理すること"],
+        "restrictions": [
+            "待ち時間などでスマホやPCで実習に無関係なコンテンツを閲覧しないこと",
+            "水分補給は室外（申し出ること）",
+            "実験室からの一時退出（申し出ること）"
+        ]
+    },
+    "実験② アルカリ型燃料電池の組み立て": {
+        "clothing": "作業着または白衣",
+        "eyewear": [
+            "アルカリを含む容器にふれるとき",
+            "容器の洗浄・後片付け",
+            "既往歴がある場合、対策のため個人的に申し出ること",
+            "操作ごとの手洗い（触れた可能性がある操作をしたとき）"
+        ],
+        "safety_risks": "アルカリによる薬傷",
+        "other_risks": "パソコンと実験器具の距離を取ること",
+        "operational": ["作業範囲は整理すること。こぼしやすい配置は避ける。", "作業台の上の水分はふき取ること"],
+        "restrictions": [
+            "待ち時間などでスマホやPCで実習に無関係なコンテンツを閲覧しないこと",
+            "水分補給は室外（申し出ること）",
+            "実験室からの一時退出（申し出ること）"
+        ]
+    },
+    "実験③ 水処理装置の設計と提案": {
+        "clothing": "作業着または白衣",
+        "eyewear": [
+            "凝集剤を含む容器にふれるとき",
+            "既往歴がある場合、対策のため個人的に申し出ること",
+            "操作ごとの手洗い（触れた可能性がある操作をしたとき）"
+        ],
+        "safety_risks": "アルカリによる薬傷",
+        "other_risks": "パソコンと実験器具の距離を取ること",
+        "operational": ["作業範囲は整理すること。こぼしやすい配置は避ける。", "作業台の上の水分はふき取ること"],
+        "restrictions": [
+            "待ち時間などでスマホやPCで実習に無関係なコンテンツを閲覧しないこと",
+            "水分補給は室外（申し出ること）",
+            "実験室からの一時退出（申し出ること）"
+        ]
+    }
+}
 # -----------------------
 # 採点ロジック関数
 # -----------------------
@@ -1551,6 +1598,31 @@ with st.expander("基本情報入力", expanded=True):
             key="class_name",
             help="所属するクラスを選択してください"
         )
+    
+    # 実験ごとの注意事項（重要）
+    st.markdown("<br>", unsafe_allow_html=True)
+    prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
+    if prec:
+        with st.container(border=True):
+            st.markdown("#### ⚠️ 実験上の注意事項（重要）")
+            c1, c2 = st.columns(2)
+            with c1:
+                st.markdown(f"**👕 服装**：\n{prec['clothing']}")
+                if "eyewear" in prec:
+                    st.markdown("**🥽 保護メガネの着用**：")
+                    for i, item in enumerate(prec['eyewear'], 1):
+                        st.markdown(f" {i}. {item}")
+            with c2:
+                st.markdown(f"**⚡ 安全上のリスク**：\n{prec['safety_risks']}")
+                st.markdown(f"**💻 その他リスク**：\n{prec['other_risks']}")
+            
+            st.markdown("**🛠️ 操作上の注意**：")
+            for i, item in enumerate(prec['operational'], 1):
+                st.markdown(f" {i}. {item}")
+                
+            st.markdown("**🚫 その他注意・制限事項**：")
+            for i, item in enumerate(prec['restrictions'], 1):
+                st.markdown(f" {i}. {item}")
     
     st.divider()
     st.markdown("**実験者情報**")
