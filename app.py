@@ -1822,6 +1822,15 @@ elif st.session_state.exp_title == "実験③ 水処理装置の設計と提案"
         st.divider()
         # 清澄度評価
         st.markdown("#### 清澄度評価 (1000点満点)")
+        # 既存セッションでカラムが足りない場合の補正
+        if "浄化対象の水" not in st.session_state.wt_clarity_df.columns:
+            st.session_state.wt_clarity_df.insert(0, "浄化対象の水", "")
+        
+        # カラム順序の固定（浄化対象の水 を先頭に）
+        cols = ["浄化対象の水", "試作検討①", "試作検討②"]
+        existing_cols = [c for c in cols if c in st.session_state.wt_clarity_df.columns]
+        st.session_state.wt_clarity_df = st.session_state.wt_clarity_df[existing_cols]
+
         st.session_state.wt_clarity_df = st.data_editor(st.session_state.wt_clarity_df, key="wt_clarity_editor")
 
         st.divider()
@@ -1947,12 +1956,3 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
-
-
-
-
-
-
-
-
-
