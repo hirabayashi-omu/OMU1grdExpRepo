@@ -681,7 +681,7 @@ with st.sidebar:
 
     # 2. 実験結果のまとめ
     with st.container(border=True):
-        st.markdown("#### ② 実験結果のまとめ")
+        st.markdown("#### ② 提出用ファイル")
         
         st.markdown("**PDF作成**")
         if st.button("提出用ファイルの作成"):
@@ -1463,6 +1463,7 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
+
 
 
 
