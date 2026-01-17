@@ -241,7 +241,7 @@ def create_graph():
     # 既に登録済みのipaexg.ttfをMatplotlibで使うのは少々手間(FontProperties等)。
     # 簡易的に "Yu Gothic" や "Meiryo" 等、Windows標準をトライしつつ、
     # フォールバックする実装が望ましいが、今回は既存コードの "Yu Gothic" を踏襲。
-    plt.rcParams["font.family"] = "ipaexg.ttf"
+    plt.rcParams["font.family"] = "IPAexGothic"
     
     fig, ax = plt.subplots(figsize=(6,4))
     
@@ -274,7 +274,7 @@ def create_graph():
     return fig
 
 def create_fuel_cell_graph():
-    plt.rcParams["font.family"] = "Yu Gothic"
+    plt.rcParams["font.family"] = "IPAexGothic"
     fig, ax = plt.subplots(figsize=(6,4))
     
     # 3回分のデータをプロット
@@ -1463,6 +1463,7 @@ with st.expander("簡易自己評価（達成度）", expanded=False):
     if is_default_basic:
 
         st.warning("⚠️ 学籍番号や氏名が初期値（例：高専 太郎）のままです。修正してください。")
+
 
 
 
