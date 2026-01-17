@@ -1604,25 +1604,25 @@ with st.expander("基本情報入力", expanded=True):
     prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
     if prec:
         with st.container(border=True):
-            st.markdown("#### ⚠️ 実験上の注意事項（重要）")
+            st.markdown("#### ⚠️ 実験上の注意事項（重要：確認後に✔を付けてください）")
             c1, c2 = st.columns(2)
             with c1:
-                st.markdown(f"**👕 服装**：\n{prec['clothing']}")
+                st.checkbox(f"**👕 服装を確認**：{prec['clothing']}", key=f"check_cloth_{st.session_state.exp_title}")
                 if "eyewear" in prec:
-                    st.markdown("**🥽 保護メガネの着用**：")
+                    st.markdown("**🥽 保護メガネの着用基準を確認**：")
                     for i, item in enumerate(prec['eyewear'], 1):
-                        st.markdown(f" {i}. {item}")
+                        st.checkbox(f"{item}", key=f"check_eye_{i}_{st.session_state.exp_title}")
             with c2:
-                st.markdown(f"**⚡ 安全上のリスク**：\n{prec['safety_risks']}")
-                st.markdown(f"**💻 その他リスク**：\n{prec['other_risks']}")
+                st.checkbox(f"**⚡ 安全上のリスクを確認**：{prec['safety_risks']}", key=f"check_s_risk_{st.session_state.exp_title}")
+                st.checkbox(f"**💻 その他リスクを確認**：{prec['other_risks']}", key=f"check_o_risk_{st.session_state.exp_title}")
             
-            st.markdown("**🛠️ 操作上の注意**：")
+            st.markdown("**🛠️ 操作上の注意を一つずつ確認**：")
             for i, item in enumerate(prec['operational'], 1):
-                st.markdown(f" {i}. {item}")
+                st.checkbox(f"{item}", key=f"check_op_{i}_{st.session_state.exp_title}")
                 
-            st.markdown("**🚫 その他注意・制限事項**：")
+            st.markdown("**🚫 その他注意・制限事項を確認**：")
             for i, item in enumerate(prec['restrictions'], 1):
-                st.markdown(f" {i}. {item}")
+                st.checkbox(f"{item}", key=f"check_res_{i}_{st.session_state.exp_title}")
     
     st.divider()
     st.markdown("**実験者情報**")
