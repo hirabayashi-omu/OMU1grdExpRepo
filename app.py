@@ -1168,428 +1168,427 @@ with st.sidebar:
         if st.button("提出用ファイルの作成"):
             if not is_all_safety_confirmed():
                 st.error("❌ **エラー：安全上の注意事項の確認が完了していません。**\n「基本情報入力」セクションの注意事項をすべて読み、チェックを入れてから再度実行してください。")
-                st.stop()
-            
-            try:
-                buffer = BytesIO()
-                doc = SimpleDocTemplate(buffer, pagesize=A4)
-                elements = []
-                styles = getSampleStyleSheet()
+            else:
+                try:
+                    buffer = BytesIO()
+                    doc = SimpleDocTemplate(buffer, pagesize=A4)
+                    elements = []
+                    styles = getSampleStyleSheet()
 
-                # 日本語フォント設定
-                styles['Normal'].fontName = 'IPAexGothic'
-                styles['Title'].fontName = 'IPAexGothic'
-                styles['Heading2'].fontName = 'IPAexGothic'
-                
-                # スコア計算
-                home_score, report_score, total_score, _ = calculate_achievement_rate()
-                score_text = f"簡易自己評価: {total_score}% (自宅課題: {home_score}% / レポート: {report_score}%)"
-                score_style = ParagraphStyle('Score', parent=styles['Normal'], alignment=TA_RIGHT, textColor=colors.red)
-                elements.append(Paragraph(score_text, score_style))
-                elements.append(Spacer(1, 5*mm))
-
-                # タイトル・基本情報
-                elements.append(Paragraph(f"実験タイトル: {st.session_state.exp_title}", styles['Title']))
-                elements.append(Paragraph(f"実験日: {st.session_state.exp_date}", styles['Normal']))
-                
-                # 安全確認ステータス
-                safety_style = ParagraphStyle('Safety', parent=styles['Normal'], textColor=colors.green, fontName='IPAexGothic')
-                elements.append(Paragraph("【安全上の注意事項：全項目確認済み】", safety_style))
-                
-                # 本人情報
-                elements.append(Paragraph(
-                    f"クラス: {st.session_state.class_name} 席番号: {st.session_state.seat_number} "
-                    f"出席番号: {st.session_state.student_id} 氏名: {st.session_state.student_name}", 
-                    styles['Normal']
-                ))
-                
-                # 共同実験者情報（入力がある場合のみ表示）
-                partners = []
-                if st.session_state.partner1_id or st.session_state.partner1_name:
-                    partners.append(f"共同実験者①: {st.session_state.partner1_id} {st.session_state.partner1_name}")
-                if st.session_state.partner2_id or st.session_state.partner2_name:
-                    partners.append(f"共同実験者②: {st.session_state.partner2_id} {st.session_state.partner2_name}")
-                
-                if partners:
-                    elements.append(Paragraph(" / ".join(partners), styles['Normal']))
-                
-                elements.append(Spacer(1,5*mm))
-
-                # 1. 調査レポート（自宅課題）
-                elements.append(Paragraph("1. 調査レポート（自宅課題）", styles['Heading2']))
-                for q in QUESTION_DICT[st.session_state.exp_title]:
-                    key_name = "設問_" + q.replace("？","").replace(" ","_")
-                    answer = st.session_state.get(key_name,"")
-                    elements.append(Paragraph(f"<b>Q. {q}</b>", styles['Normal']))
-                    elements.append(Paragraph(f"A. {answer}", styles['Normal']))
-                    elements.append(Spacer(1, 2*mm))
-                
-                # 参考文献
-                elements.append(Paragraph("【参考文献】", styles['Normal']))
-                if not st.session_state.references_list.empty:
-                    ref_data = [["書籍名・サイト名", "著者・発行者", "発行年・URL"]]
-                    ref_dict = st.session_state.references_list.to_dict(orient="records")
-                    # テーブル内での改行を有効にするためParagraphを使用
-                    table_cell_style = ParagraphStyle('TableCellStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=9, leading=11)
-                    for item in ref_dict:
-                         ref_data.append([
-                             Paragraph(str(item.get("書籍名・サイト名", "")), table_cell_style),
-                             Paragraph(str(item.get("著者・発行者", "")), table_cell_style),
-                             Paragraph(str(item.get("発行年・URL", "")), table_cell_style)
-                         ])
+                    # 日本語フォント設定
+                    styles['Normal'].fontName = 'IPAexGothic'
+                    styles['Title'].fontName = 'IPAexGothic'
+                    styles['Heading2'].fontName = 'IPAexGothic'
                     
-                    if len(ref_data) > 1:
-                        rt = Table(ref_data, colWidths=[60*mm, 50*mm, 50*mm])
-                        rt.setStyle(TableStyle([
+                    # スコア計算
+                    home_score, report_score, total_score, _ = calculate_achievement_rate()
+                    score_text = f"簡易自己評価: {total_score}% (自宅課題: {home_score}% / レポート: {report_score}%)"
+                    score_style = ParagraphStyle('Score', parent=styles['Normal'], alignment=TA_RIGHT, textColor=colors.red)
+                    elements.append(Paragraph(score_text, score_style))
+                    elements.append(Spacer(1, 5*mm))
+
+                    # タイトル・基本情報
+                    elements.append(Paragraph(f"実験タイトル: {st.session_state.exp_title}", styles['Title']))
+                    elements.append(Paragraph(f"実験日: {st.session_state.exp_date}", styles['Normal']))
+                    
+                    # 安全確認ステータス
+                    safety_style = ParagraphStyle('Safety', parent=styles['Normal'], textColor=colors.green, fontName='IPAexGothic')
+                    elements.append(Paragraph("【安全上の注意事項：全項目確認済み】", safety_style))
+                    
+                    # 本人情報
+                    elements.append(Paragraph(
+                        f"クラス: {st.session_state.class_name} 席番号: {st.session_state.seat_number} "
+                        f"出席番号: {st.session_state.student_id} 氏名: {st.session_state.student_name}", 
+                        styles['Normal']
+                    ))
+                    
+                    # 共同実験者情報（入力がある場合のみ表示）
+                    partners = []
+                    if st.session_state.partner1_id or st.session_state.partner1_name:
+                        partners.append(f"共同実験者①: {st.session_state.partner1_id} {st.session_state.partner1_name}")
+                    if st.session_state.partner2_id or st.session_state.partner2_name:
+                        partners.append(f"共同実験者②: {st.session_state.partner2_id} {st.session_state.partner2_name}")
+                    
+                    if partners:
+                        elements.append(Paragraph(" / ".join(partners), styles['Normal']))
+                    
+                    elements.append(Spacer(1,5*mm))
+
+                    # 1. 調査レポート（自宅課題）
+                    elements.append(Paragraph("1. 調査レポート（自宅課題）", styles['Heading2']))
+                    for q in QUESTION_DICT[st.session_state.exp_title]:
+                        key_name = "設問_" + q.replace("？","").replace(" ","_")
+                        answer = st.session_state.get(key_name,"")
+                        elements.append(Paragraph(f"<b>Q. {q}</b>", styles['Normal']))
+                        elements.append(Paragraph(f"A. {answer}", styles['Normal']))
+                        elements.append(Spacer(1, 2*mm))
+                    
+                    # 参考文献
+                    elements.append(Paragraph("【参考文献】", styles['Normal']))
+                    if not st.session_state.references_list.empty:
+                        ref_data = [["書籍名・サイト名", "著者・発行者", "発行年・URL"]]
+                        ref_dict = st.session_state.references_list.to_dict(orient="records")
+                        # テーブル内での改行を有効にするためParagraphを使用
+                        table_cell_style = ParagraphStyle('TableCellStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=9, leading=11)
+                        for item in ref_dict:
+                             ref_data.append([
+                                 Paragraph(str(item.get("書籍名・サイト名", "")), table_cell_style),
+                                 Paragraph(str(item.get("著者・発行者", "")), table_cell_style),
+                                 Paragraph(str(item.get("発行年・URL", "")), table_cell_style)
+                             ])
+                        
+                        if len(ref_data) > 1:
+                            rt = Table(ref_data, colWidths=[60*mm, 50*mm, 50*mm])
+                            rt.setStyle(TableStyle([
+                                ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                                ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
+                                ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                            ]))
+                            elements.append(rt)
+                        else:
+                            elements.append(Paragraph("なし", styles['Normal']))
+                    else:
+                        elements.append(Paragraph("なし", styles['Normal']))
+
+                    elements.append(Spacer(1, 4*mm))
+
+                    # 2. 実験方法
+                    elements.append(Paragraph("2. 実験方法", styles['Heading2']))
+                    elements.append(Paragraph("【使用器具】", styles['Normal']))
+                    tools_data = [["器具・装置・薬品名", "用途・役割など"]]
+                    tools_dict = st.session_state.tools_list.to_dict(orient="records")
+                    table_cell_style = ParagraphStyle('TableCellStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=9, leading=11)
+                    for item in tools_dict:
+                        # 新旧カラム名の両対応（旧名がある場合はそちらを使用）
+                        name = item.get("器具・装置・薬品名", item.get("器具名", ""))
+                        role = item.get("用途・役割など", item.get("役割", ""))
+                        tools_data.append([
+                            Paragraph(str(name), table_cell_style),
+                            Paragraph(str(role), table_cell_style)
+                        ])
+                    
+                    if len(tools_data) > 1:
+                        t = Table(tools_data, colWidths=[60*mm, 100*mm])
+                        t.setStyle(TableStyle([
                             ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
                             ('GRID', (0,0), (-1,-1), 0.5, colors.black),
                             ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
                             ('ALIGN', (0,0), (-1,-1), 'LEFT'),
                         ]))
-                        elements.append(rt)
+                        elements.append(t)
                     else:
                         elements.append(Paragraph("なし", styles['Normal']))
-                else:
-                    elements.append(Paragraph("なし", styles['Normal']))
-
-                elements.append(Spacer(1, 4*mm))
-
-                # 2. 実験方法
-                elements.append(Paragraph("2. 実験方法", styles['Heading2']))
-                elements.append(Paragraph("【使用器具】", styles['Normal']))
-                tools_data = [["器具・装置・薬品名", "用途・役割など"]]
-                tools_dict = st.session_state.tools_list.to_dict(orient="records")
-                table_cell_style = ParagraphStyle('TableCellStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=9, leading=11)
-                for item in tools_dict:
-                    # 新旧カラム名の両対応（旧名がある場合はそちらを使用）
-                    name = item.get("器具・装置・薬品名", item.get("器具名", ""))
-                    role = item.get("用途・役割など", item.get("役割", ""))
-                    tools_data.append([
-                        Paragraph(str(name), table_cell_style),
-                        Paragraph(str(role), table_cell_style)
-                    ])
-                
-                if len(tools_data) > 1:
-                    t = Table(tools_data, colWidths=[60*mm, 100*mm])
-                    t.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                        ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
-                        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-                    ]))
-                    elements.append(t)
-                else:
-                    elements.append(Paragraph("なし", styles['Normal']))
-                elements.append(Spacer(1, 3*mm))
-
-                if st.session_state.apparatus_photo_data:
-                    elements.append(Paragraph("【作成した実験装置】", styles['Normal']))
-                    try:
-                        img_data = base64.b64decode(st.session_state.apparatus_photo_data)
-                        img_io = BytesIO(img_data)
-                        img = create_proportional_image(img_io, max_width=120*mm, max_height=80*mm)
-                        elements.append(img)
-                    except Exception as e:
-                        elements.append(Paragraph(f"(画像読み込みエラー: {e})", styles['Normal']))
                     elements.append(Spacer(1, 3*mm))
 
-                elements.append(Paragraph(f"【評価方法】 {st.session_state.evaluation_method}", styles['Normal']))
-                elements.append(Spacer(1, 5*mm))
+                    if st.session_state.apparatus_photo_data:
+                        elements.append(Paragraph("【作成した実験装置】", styles['Normal']))
+                        try:
+                            img_data = base64.b64decode(st.session_state.apparatus_photo_data)
+                            img_io = BytesIO(img_data)
+                            img = create_proportional_image(img_io, max_width=120*mm, max_height=80*mm)
+                            elements.append(img)
+                        except Exception as e:
+                            elements.append(Paragraph(f"(画像読み込みエラー: {e})", styles['Normal']))
+                        elements.append(Spacer(1, 3*mm))
 
-                # 3. 実験結果
-                elements.append(Paragraph("3. 実験結果", styles['Heading2']))
-                
-                if st.session_state.exp_title == "実験① 熱の可視化":
-                    # 融解温度テーブル
-                    elements.append(Paragraph("■ ロウの融解温度(℃)", styles['Normal']))
-                    m_df = st.session_state.melting_point_df
-                    m_table_data = [m_df.columns.tolist()] + m_df.values.tolist()
-                    mt = Table(m_table_data, colWidths=[30*mm]*4)
-                    mt.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                        ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
-                        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                    ]))
-                    elements.append(mt)
-                    elements.append(Spacer(1, 3*mm))
-
-                    elements.append(Paragraph("■ 距離と融解時間", styles['Normal']))
-                    df = st.session_state.result_df
-                    table_data = [df.columns.tolist()] + df.values.tolist()
-                    col_w = 40*mm
-                    t = Table(table_data, colWidths=[col_w]*len(df.columns))
-                    t.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                        ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
-                        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                    ]))
-                    elements.append(t)
-                    elements.append(Spacer(1, 2*mm))
-
-                    # 4. 結果グラフ
-                    elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
-                    try:
-                        fig = create_graph()
-                        img_buffer = BytesIO()
-                        fig.savefig(img_buffer, format='png', dpi=100)
-                        img_buffer.seek(0)
-                        img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
-                        img.hAlign = 'CENTER'
-                        elements.append(img)
-                        plt.close(fig)
-                    except Exception as e:
-                        elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
-                    
-                    caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
-                    elements.append(Paragraph("図：熱が伝導した距離とロウの融解時間の関係（溶け始めの時間）", caption_style))
+                    elements.append(Paragraph(f"【評価方法】 {st.session_state.evaluation_method}", styles['Normal']))
                     elements.append(Spacer(1, 5*mm))
 
-                    # 5. 比較検証・考察
-                    elements.append(Paragraph("5. 比較検証・考察", styles['Heading2']))
-                    lit_vals = f"熱伝導率の文献値: 銅={st.session_state.lit_cu}, アルミ={st.session_state.lit_al}, ステンレス={st.session_state.lit_sus} (W/m/K)"
-                    elements.append(Paragraph(lit_vals, styles['Normal']))
-                    elements.append(Spacer(1, 2*mm))
-                    elements.append(Paragraph("【考察】", styles['Normal']))
-                    elements.append(Paragraph(st.session_state.comparison_text, styles['Normal']))
-                    elements.append(Spacer(1, 2*mm))
-                    if st.session_state.thermal_conductivity_ref:
-                        elements.append(Paragraph(f"（熱伝導率の参考文献: {st.session_state.thermal_conductivity_ref}）", styles['Normal']))
-
-                elif st.session_state.exp_title == "実験② アルカリ型燃料電池の組み立て":
-                    # 充電実験
-                    elements.append(Paragraph("■ 充電実験", styles['Normal']))
-                    c_df = st.session_state.fc_charge_df
-                    c_table_data = [c_df.columns.tolist()] + c_df.values.tolist()
-                    ct = Table(c_table_data, colWidths=[40*mm]*3)
-                    ct.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                        ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
-                        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                    ]))
-                    elements.append(ct)
-                    elements.append(Spacer(1, 3*mm))
-
-                    # 放電実験
-                    elements.append(Paragraph("■ 放電実験", styles['Normal']))
-                    for i, df in enumerate([st.session_state.fc_discharge_1, st.session_state.fc_discharge_2, st.session_state.fc_discharge_3]):
-                        elements.append(Paragraph(f"【{i+1}回目】", styles['Normal']))
-                        d_table_data = [df.columns.tolist()] + df.values.tolist()
-                        dt = Table(d_table_data, colWidths=[25*mm]*5)
-                        dt.setStyle(TableStyle([
+                    # 3. 実験結果
+                    elements.append(Paragraph("3. 実験結果", styles['Heading2']))
+                    
+                    if st.session_state.exp_title == "実験① 熱の可視化":
+                        # 融解温度テーブル
+                        elements.append(Paragraph("■ ロウの融解温度(℃)", styles['Normal']))
+                        m_df = st.session_state.melting_point_df
+                        m_table_data = [m_df.columns.tolist()] + m_df.values.tolist()
+                        mt = Table(m_table_data, colWidths=[30*mm]*4)
+                        mt.setStyle(TableStyle([
                             ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
                             ('GRID', (0,0), (-1,-1), 0.5, colors.black),
                             ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
                             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                            ('FONTSIZE', (0,0), (-1,-1), 8),
                         ]))
-                        elements.append(dt)
+                        elements.append(mt)
+                        elements.append(Spacer(1, 3*mm))
+
+                        elements.append(Paragraph("■ 距離と融解時間", styles['Normal']))
+                        df = st.session_state.result_df
+                        table_data = [df.columns.tolist()] + df.values.tolist()
+                        col_w = 40*mm
+                        t = Table(table_data, colWidths=[col_w]*len(df.columns))
+                        t.setStyle(TableStyle([
+                            ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                            ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
+                            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                        ]))
+                        elements.append(t)
                         elements.append(Spacer(1, 2*mm))
 
-                    # 4. 結果グラフ
-                    elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
-                    try:
-                        fig = create_fuel_cell_graph()
-                        img_buffer = BytesIO()
-                        fig.savefig(img_buffer, format='png', dpi=100)
-                        img_buffer.seek(0)
-                        img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
-                        img.hAlign = 'CENTER'
-                        elements.append(img)
-                        plt.close(fig)
-                    except Exception as e:
-                        elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
-                    
-                    caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
-                    elements.append(Paragraph("図：放電時の時間と出力の関係", caption_style))
-                    elements.append(Spacer(1, 5*mm))
-
-                    # 近似仕事量表
-                    elements.append(Paragraph("■ 発生エネルギー (J)", styles['Normal']))
-                    areas = []
-                    for df_raw in [st.session_state.fc_discharge_1, st.session_state.fc_discharge_2, st.session_state.fc_discharge_3]:
-                         try:
-                             # 念のため DataFrame 変換
-                             df = pd.DataFrame(df_raw) if not isinstance(df_raw, pd.DataFrame) else df_raw
-                             t = pd.to_numeric(df["放電時間(sec)"], errors="coerce").fillna(0).values
-                             p = pd.to_numeric(df["出力(mW)"], errors="coerce").fillna(0).values
-                             area_mJ = 0
-                             for k in range(len(t)-1):
-                                 dt = t[k+1] - t[k]
-                                 avg_p = (p[k+1] + p[k]) / 2.0
-                                 area_mJ += dt * avg_p
-                             areas.append(f"{area_mJ/1000:.2f}")
-                         except Exception as e:
-                             areas.append("-")
-                    
-                    area_table_data = [["1回目", "2回目", "3回目"], areas]
-                    at = Table(area_table_data, colWidths=[30*mm]*3)
-                    at.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-                        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                    ]))
-                    elements.append(at)
-                    elements.append(Spacer(1, 5*mm))
-
-                    # 5. 比較検証・考察
-                    elements.append(Paragraph("5. 比較検証・考察", styles['Heading2']))
-                    elements.append(Paragraph("【充電条件の比較と考察】", styles['Normal']))
-                    elements.append(Paragraph(st.session_state.fc_comparison_text, styles['Normal']))
-
-                elif st.session_state.exp_title == "実験③ 水処理装置の設計と提案":
-                    # 実験結果 - 写真とテキスト
-                    elements.append(Paragraph("■ 浄化対象の水", styles['Normal']))
-                    if st.session_state.wt_original_water_photo:
+                        # 4. 結果グラフ
+                        elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
                         try:
-                            img_data = base64.b64decode(st.session_state.wt_original_water_photo)
-                            img = create_proportional_image(BytesIO(img_data), max_width=100*mm, max_height=70*mm)
+                            fig = create_graph()
+                            img_buffer = BytesIO()
+                            fig.savefig(img_buffer, format='png', dpi=100)
+                            img_buffer.seek(0)
+                            img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
+                            img.hAlign = 'CENTER'
                             elements.append(img)
-                        except: pass
+                            plt.close(fig)
+                        except Exception as e:
+                            elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
+                        
+                        caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
+                        elements.append(Paragraph("図：熱が伝導した距離とロウの融解時間の関係（溶け始めの時間）", caption_style))
+                        elements.append(Spacer(1, 5*mm))
+
+                        # 5. 比較検証・考察
+                        elements.append(Paragraph("5. 比較検証・考察", styles['Heading2']))
+                        lit_vals = f"熱伝導率の文献値: 銅={st.session_state.lit_cu}, アルミ={st.session_state.lit_al}, ステンレス={st.session_state.lit_sus} (W/m/K)"
+                        elements.append(Paragraph(lit_vals, styles['Normal']))
+                        elements.append(Spacer(1, 2*mm))
+                        elements.append(Paragraph("【考察】", styles['Normal']))
+                        elements.append(Paragraph(st.session_state.comparison_text, styles['Normal']))
+                        elements.append(Spacer(1, 2*mm))
+                        if st.session_state.thermal_conductivity_ref:
+                            elements.append(Paragraph(f"（熱伝導率の参考文献: {st.session_state.thermal_conductivity_ref}）", styles['Normal']))
+
+                    elif st.session_state.exp_title == "実験② アルカリ型燃料電池の組み立て":
+                        # 充電実験
+                        elements.append(Paragraph("■ 充電実験", styles['Normal']))
+                        c_df = st.session_state.fc_charge_df
+                        c_table_data = [c_df.columns.tolist()] + c_df.values.tolist()
+                        ct = Table(c_table_data, colWidths=[40*mm]*3)
+                        ct.setStyle(TableStyle([
+                            ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                            ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
+                            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                        ]))
+                        elements.append(ct)
+                        elements.append(Spacer(1, 3*mm))
+
+                        # 放電実験
+                        elements.append(Paragraph("■ 放電実験", styles['Normal']))
+                        for i, df in enumerate([st.session_state.fc_discharge_1, st.session_state.fc_discharge_2, st.session_state.fc_discharge_3]):
+                            elements.append(Paragraph(f"【{i+1}回目】", styles['Normal']))
+                            d_table_data = [df.columns.tolist()] + df.values.tolist()
+                            dt = Table(d_table_data, colWidths=[25*mm]*5)
+                            dt.setStyle(TableStyle([
+                                ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                                ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                                ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
+                                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                                ('FONTSIZE', (0,0), (-1,-1), 8),
+                            ]))
+                            elements.append(dt)
+                            elements.append(Spacer(1, 2*mm))
+
+                        # 4. 結果グラフ
+                        elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
+                        try:
+                            fig = create_fuel_cell_graph()
+                            img_buffer = BytesIO()
+                            fig.savefig(img_buffer, format='png', dpi=100)
+                            img_buffer.seek(0)
+                            img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
+                            img.hAlign = 'CENTER'
+                            elements.append(img)
+                            plt.close(fig)
+                        except Exception as e:
+                            elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
+                        
+                        caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
+                        elements.append(Paragraph("図：放電時の時間と出力の関係", caption_style))
+                        elements.append(Spacer(1, 5*mm))
+
+                        # 近似仕事量表
+                        elements.append(Paragraph("■ 発生エネルギー (J)", styles['Normal']))
+                        areas = []
+                        for df_raw in [st.session_state.fc_discharge_1, st.session_state.fc_discharge_2, st.session_state.fc_discharge_3]:
+                             try:
+                                 # 念のため DataFrame 変換
+                                 df = pd.DataFrame(df_raw) if not isinstance(df_raw, pd.DataFrame) else df_raw
+                                 t = pd.to_numeric(df["放電時間(sec)"], errors="coerce").fillna(0).values
+                                 p = pd.to_numeric(df["出力(mW)"], errors="coerce").fillna(0).values
+                                 area_mJ = 0
+                                 for k in range(len(t)-1):
+                                     dt = t[k+1] - t[k]
+                                     avg_p = (p[k+1] + p[k]) / 2.0
+                                     area_mJ += dt * avg_p
+                                 areas.append(f"{area_mJ/1000:.2f}")
+                             except Exception as e:
+                                 areas.append("-")
+                        
+                        area_table_data = [["1回目", "2回目", "3回目"], areas]
+                        at = Table(area_table_data, colWidths=[30*mm]*3)
+                        at.setStyle(TableStyle([
+                            ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                            ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+                            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                        ]))
+                        elements.append(at)
+                        elements.append(Spacer(1, 5*mm))
+
+                        # 5. 比較検証・考察
+                        elements.append(Paragraph("5. 比較検証・考察", styles['Heading2']))
+                        elements.append(Paragraph("【充電条件の比較と考察】", styles['Normal']))
+                        elements.append(Paragraph(st.session_state.fc_comparison_text, styles['Normal']))
+
+                    elif st.session_state.exp_title == "実験③ 水処理装置の設計と提案":
+                        # 実験結果 - 写真とテキスト
+                        elements.append(Paragraph("■ 浄化対象の水", styles['Normal']))
+                        if st.session_state.wt_original_water_photo:
+                            try:
+                                img_data = base64.b64decode(st.session_state.wt_original_water_photo)
+                                img = create_proportional_image(BytesIO(img_data), max_width=100*mm, max_height=70*mm)
+                                elements.append(img)
+                            except: pass
+                        elements.append(Spacer(1, 3*mm))
+
+                        elements.append(Paragraph("■ 試作検討①", styles['Heading2']))
+                        # 写真並記
+                        p1_imgs = []
+                        if st.session_state.wt_proto1_dev_photo:
+                            try:
+                                 p1_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto1_dev_photo)), max_width=75*mm, max_height=55*mm))
+                            except: pass
+                        if st.session_state.wt_proto1_water_photo:
+                            try:
+                                 p1_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto1_water_photo)), max_width=75*mm, max_height=55*mm))
+                            except: pass
+                        
+                        if p1_imgs:
+                            t_data = [p1_imgs]
+                            t = Table(t_data)
+                            t.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'TOP')]))
+                            elements.append(t)
+
+                        elements.append(Paragraph("【原理や工夫】", styles['Normal']))
+                        elements.append(Paragraph(st.session_state.wt_proto1_text, styles['Normal']))
+                        elements.append(Spacer(1, 4*mm))
+
+                        elements.append(Paragraph("■ 試作検討②", styles['Heading2']))
+                        p2_imgs = []
+                        if st.session_state.wt_proto2_dev_photo:
+                            try:
+                                 p2_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto2_dev_photo)), max_width=75*mm, max_height=55*mm))
+                            except: pass
+                        if st.session_state.wt_proto2_water_photo:
+                            try:
+                                 p2_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto2_water_photo)), max_width=75*mm, max_height=55*mm))
+                            except: pass
+                        
+                        if p2_imgs:
+                            t_data = [p2_imgs]
+                            t = Table(t_data)
+                            t.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'TOP')]))
+                            elements.append(t)
+                            
+                        elements.append(Paragraph("【原理や工夫】", styles['Normal']))
+                        elements.append(Paragraph(st.session_state.wt_proto2_text, styles['Normal']))
+                        elements.append(Spacer(1, 4*mm))
+
+                        # 清澄度評価
+                        elements.append(Paragraph("■ 清澄度評価 (1000点満点)", styles['Heading2']))
+                        clarity_df = st.session_state.wt_clarity_df
+                        c_table_data = [clarity_df.columns.tolist()] + clarity_df.values.tolist()
+                        ct = Table(c_table_data, colWidths=[40*mm]*2)
+                        ct.setStyle(TableStyle([
+                            ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+                            ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
+                            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                        ]))
+                        elements.append(ct)
+                        elements.append(Spacer(1, 4*mm))
+
+                        # 4. 結果グラフ
+                        elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
+                        try:
+                            fig = create_water_treatment_graph()
+                            img_buffer = BytesIO()
+                            fig.savefig(img_buffer, format='png', dpi=100)
+                            img_buffer.seek(0)
+                            img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
+                            img.hAlign = 'CENTER'
+                            elements.append(img)
+                            plt.close(fig)
+                        except Exception as e:
+                            elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
+                        
+                        caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
+                        elements.append(Paragraph("図：水処理装置による浄化の効果", caption_style))
+                        elements.append(Spacer(1, 5*mm))
+
+                        # 凝集剤の効果
+                        elements.append(Paragraph("■ 凝集剤の効果", styles['Heading2']))
+                        if st.session_state.wt_coagulation_photo:
+                            try:
+                                img = create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_coagulation_photo)), max_width=100*mm, max_height=70*mm)
+                                elements.append(img)
+                            except: pass
+                        elements.append(Spacer(1, 2*mm))
+                        elements.append(Paragraph("【原理】", styles['Normal']))
+                        elements.append(Paragraph(st.session_state.wt_coagulation_text, styles['Normal']))
+                        elements.append(Spacer(1, 5*mm))
+
+                        # 5. 比較検証・考察
+                        elements.append(Paragraph("5. 比較検証・考察", styles['Heading2']))
+                        elements.append(Paragraph("【装置の比較（試作① vs 試作②）】", styles['Normal']))
+                        elements.append(Paragraph(st.session_state.wt_comparison_text, styles['Normal']))
+
+
+                    # -----------------------
+                    # 6. 更新履歴（コピペ防止・証跡）
+                    # -----------------------
+                    elements.append(Spacer(1, 10*mm))
+                    elements.append(Paragraph("6. レポート作成・更新履歴", styles['Heading2']))
+                    
+                    origin = st.session_state.get("origin_info", {"created_at": "-", "created_by_id": "-", "created_by_name": "-"})
+                    elements.append(Paragraph(f"【オリジナル作成情報】", styles['Normal']))
+                    elements.append(Paragraph(f"作成日時: {origin['created_at']}", styles['Normal']))
+                    elements.append(Paragraph(f"作成者: {origin['created_by_id']} {origin['created_by_name']}", styles['Normal']))
                     elements.append(Spacer(1, 3*mm))
 
-                    elements.append(Paragraph("■ 試作検討①", styles['Heading2']))
-                    # 写真並記
-                    p1_imgs = []
-                    if st.session_state.wt_proto1_dev_photo:
-                        try:
-                             p1_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto1_dev_photo)), max_width=75*mm, max_height=55*mm))
-                        except: pass
-                    if st.session_state.wt_proto1_water_photo:
-                        try:
-                             p1_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto1_water_photo)), max_width=75*mm, max_height=55*mm))
-                        except: pass
+                    elements.append(Paragraph(f"【履歴一覧】", styles['Normal']))
+                    table_history_style = ParagraphStyle('TableHistoryStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=7, leading=8)
+                    history_data = [["日時", "操作内容", "詳細・備考", "実行ユーザー"]]
+                    for entry in st.session_state.get("history_log", []):
+                        history_data.append([
+                            Paragraph(str(entry.get("timestamp", "")), table_history_style),
+                            Paragraph(str(entry.get("action", "")), table_history_style),
+                            Paragraph(str(entry.get("detail", "")), table_history_style),
+                            Paragraph(str(entry.get("user", "")), table_history_style)
+                        ])
                     
-                    if p1_imgs:
-                        t_data = [p1_imgs]
-                        t = Table(t_data)
-                        t.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'TOP')]))
-                        elements.append(t)
+                    if len(history_data) > 1:
+                        ht = Table(history_data, colWidths=[35*mm, 45*mm, 55*mm, 30*mm])
+                        ht.setStyle(TableStyle([
+                            ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
+                            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                            ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
+                            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                            ('FONTSIZE', (0,0), (-1,-1), 7),
+                            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ]))
+                        elements.append(ht)
 
-                    elements.append(Paragraph("【原理や工夫】", styles['Normal']))
-                    elements.append(Paragraph(st.session_state.wt_proto1_text, styles['Normal']))
-                    elements.append(Spacer(1, 4*mm))
-
-                    elements.append(Paragraph("■ 試作検討②", styles['Heading2']))
-                    p2_imgs = []
-                    if st.session_state.wt_proto2_dev_photo:
-                        try:
-                             p2_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto2_dev_photo)), max_width=75*mm, max_height=55*mm))
-                        except: pass
-                    if st.session_state.wt_proto2_water_photo:
-                        try:
-                             p2_imgs.append(create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_proto2_water_photo)), max_width=75*mm, max_height=55*mm))
-                        except: pass
+                    doc.build(elements)
                     
-                    if p2_imgs:
-                        t_data = [p2_imgs]
-                        t = Table(t_data)
-                        t.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER'), ('VALIGN', (0,0), (-1,-1), 'TOP')]))
-                        elements.append(t)
-                        
-                    elements.append(Paragraph("【原理や工夫】", styles['Normal']))
-                    elements.append(Paragraph(st.session_state.wt_proto2_text, styles['Normal']))
-                    elements.append(Spacer(1, 4*mm))
+                    # PDF出力の履歴を追加
+                    filename_pdf = f"{st.session_state.student_id}_{st.session_state.student_name}_{st.session_state.exp_title}.pdf".replace(" ", "_").replace("　", "_")
+                    add_history_log("最終提出PDFの出力", f"ファイル: {filename_pdf}")
 
-                    # 清澄度評価
-                    elements.append(Paragraph("■ 清澄度評価 (1000点満点)", styles['Heading2']))
-                    clarity_df = st.session_state.wt_clarity_df
-                    c_table_data = [clarity_df.columns.tolist()] + clarity_df.values.tolist()
-                    ct = Table(c_table_data, colWidths=[40*mm]*2)
-                    ct.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-                        ('BACKGROUND', (0,0), (1,0), colors.lightgrey),
-                        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                    ]))
-                    elements.append(ct)
-                    elements.append(Spacer(1, 4*mm))
-
-                    # 4. 結果グラフ
-                    elements.append(Paragraph("4. 結果グラフ", styles['Heading2']))
-                    try:
-                        fig = create_water_treatment_graph()
-                        img_buffer = BytesIO()
-                        fig.savefig(img_buffer, format='png', dpi=100)
-                        img_buffer.seek(0)
-                        img = create_proportional_image(img_buffer, max_width=140*mm, max_height=90*mm)
-                        img.hAlign = 'CENTER'
-                        elements.append(img)
-                        plt.close(fig)
-                    except Exception as e:
-                        elements.append(Paragraph(f"グラフ作成エラー: {e}", styles['Normal']))
-                    
-                    caption_style = ParagraphStyle('Caption', parent=styles['Normal'], alignment=TA_CENTER)
-                    elements.append(Paragraph("図：水処理装置による浄化の効果", caption_style))
-                    elements.append(Spacer(1, 5*mm))
-
-                    # 凝集剤の効果
-                    elements.append(Paragraph("■ 凝集剤の効果", styles['Heading2']))
-                    if st.session_state.wt_coagulation_photo:
-                        try:
-                            img = create_proportional_image(BytesIO(base64.b64decode(st.session_state.wt_coagulation_photo)), max_width=100*mm, max_height=70*mm)
-                            elements.append(img)
-                        except: pass
-                    elements.append(Spacer(1, 2*mm))
-                    elements.append(Paragraph("【原理】", styles['Normal']))
-                    elements.append(Paragraph(st.session_state.wt_coagulation_text, styles['Normal']))
-                    elements.append(Spacer(1, 5*mm))
-
-                    # 5. 比較検証・考察
-                    elements.append(Paragraph("5. 比較検証・考察", styles['Heading2']))
-                    elements.append(Paragraph("【装置の比較（試作① vs 試作②）】", styles['Normal']))
-                    elements.append(Paragraph(st.session_state.wt_comparison_text, styles['Normal']))
-
-
-                # -----------------------
-                # 6. 更新履歴（コピペ防止・証跡）
-                # -----------------------
-                elements.append(Spacer(1, 10*mm))
-                elements.append(Paragraph("6. レポート作成・更新履歴", styles['Heading2']))
-                
-                origin = st.session_state.get("origin_info", {"created_at": "-", "created_by_id": "-", "created_by_name": "-"})
-                elements.append(Paragraph(f"【オリジナル作成情報】", styles['Normal']))
-                elements.append(Paragraph(f"作成日時: {origin['created_at']}", styles['Normal']))
-                elements.append(Paragraph(f"作成者: {origin['created_by_id']} {origin['created_by_name']}", styles['Normal']))
-                elements.append(Spacer(1, 3*mm))
-
-                elements.append(Paragraph(f"【履歴一覧】", styles['Normal']))
-                table_history_style = ParagraphStyle('TableHistoryStyle', parent=styles['Normal'], fontName='IPAexGothic', fontSize=7, leading=8)
-                history_data = [["日時", "操作内容", "詳細・備考", "実行ユーザー"]]
-                for entry in st.session_state.get("history_log", []):
-                    history_data.append([
-                        Paragraph(str(entry.get("timestamp", "")), table_history_style),
-                        Paragraph(str(entry.get("action", "")), table_history_style),
-                        Paragraph(str(entry.get("detail", "")), table_history_style),
-                        Paragraph(str(entry.get("user", "")), table_history_style)
-                    ])
-                
-                if len(history_data) > 1:
-                    ht = Table(history_data, colWidths=[35*mm, 45*mm, 55*mm, 30*mm])
-                    ht.setStyle(TableStyle([
-                        ('FONT', (0,0), (-1,-1), 'IPAexGothic'),
-                        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-                        ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke),
-                        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-                        ('FONTSIZE', (0,0), (-1,-1), 7),
-                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                    ]))
-                    elements.append(ht)
-
-                doc.build(elements)
-                
-                # PDF出力の履歴を追加
-                filename_pdf = f"{st.session_state.student_id}_{st.session_state.student_name}_{st.session_state.exp_title}.pdf".replace(" ", "_").replace("　", "_")
-                add_history_log("最終提出PDFの出力", f"ファイル: {filename_pdf}")
-
-                st.session_state["pdf_bytes"] = buffer.getvalue()
-                st.session_state["pdf_filename"] = filename_pdf
-                st.success("PDFを作成しました。ダウンロードボタンを押してください。")
-            except Exception as e:
-                st.error(f"PDF作成エラー: {e}")
+                    st.session_state["pdf_bytes"] = buffer.getvalue()
+                    st.session_state["pdf_filename"] = filename_pdf
+                    st.success("PDFを作成しました。ダウンロードボタンを押してください。")
+                except Exception as e:
+                    st.error(f"PDF作成エラー: {e}")
 
         if "pdf_bytes" in st.session_state:
             st.download_button("提出用ファイルのダウンロード", st.session_state["pdf_bytes"], file_name=st.session_state.get("pdf_filename", "report.pdf"), mime="application/pdf")
