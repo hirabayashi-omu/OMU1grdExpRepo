@@ -885,6 +885,24 @@ def calculate_achievement_rate():
 
     return int(score_home), int(score_report), int(score_home + score_report), is_default_basic
 
+def is_all_safety_confirmed():
+    """現在の実験のすべての安全チェックが入っているか確認する"""
+    prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
+    if not prec:
+        return True
+    
+    # 必須キーのリストアップ
+    required_keys = ["check_cloth", "check_s_risk", "check_o_risk"]
+    if "eyewear" in prec:
+        required_keys += [f"check_eye_{i}" for i in range(1, len(prec['eyewear']) + 1)]
+    required_keys += [f"check_op_{i}" for i in range(1, len(prec['operational']) + 1)]
+    required_keys += [f"check_res_{i}" for i in range(1, len(prec['restrictions']) + 1)]
+    
+    for key in required_keys:
+        if not st.session_state.get(key):
+            return False
+    return True
+
 # -----------------------
 # ページ設定
 # -----------------------
@@ -966,6 +984,14 @@ st.markdown("""
         color: #818cf8;
         font-weight: 700;
         margin-left: 0.5rem;
+    }
+
+    /* チェックボックスの間隔を詰める */
+    div[data-testid="stCheckbox"] {
+        margin-bottom: -15px;
+    }
+    div[data-testid="stCheckbox"] label p {
+        font-size: 0.85rem !important;
     }
     </style>
 
@@ -1140,6 +1166,10 @@ with st.sidebar:
         
         st.markdown("**PDF作成**")
         if st.button("提出用ファイルの作成"):
+            if not is_all_safety_confirmed():
+                st.error("❌ **エラー：安全上の注意事項の確認が完了していません。**\n「基本情報入力」セクションの注意事項をすべて読み、チェックを入れてから再度実行してください。")
+                st.stop()
+            
             try:
                 buffer = BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=A4)
@@ -1161,6 +1191,10 @@ with st.sidebar:
                 # タイトル・基本情報
                 elements.append(Paragraph(f"実験タイトル: {st.session_state.exp_title}", styles['Title']))
                 elements.append(Paragraph(f"実験日: {st.session_state.exp_date}", styles['Normal']))
+                
+                # 安全確認ステータス
+                safety_style = ParagraphStyle('Safety', parent=styles['Normal'], textColor=colors.green, fontName='IPAexGothic')
+                elements.append(Paragraph("【安全上の注意事項：全項目確認済み】", safety_style))
                 
                 # 本人情報
                 elements.append(Paragraph(
@@ -1600,29 +1634,29 @@ with st.expander("基本情報入力", expanded=True):
         )
     
     # 実験ごとの注意事項（重要）
-    st.markdown("<br>", unsafe_allow_html=True)
     prec = SAFETY_PRECAUTIONS.get(st.session_state.exp_title)
     if prec:
         with st.container(border=True):
-            st.markdown("#### ⚠️ 実験上の注意事項（重要：確認後に✔を付けてください）")
-            c1, c2 = st.columns(2)
+            st.markdown("<div style='font-size:0.9rem; font-weight:700; color:#ef4444; margin-bottom:10px;'>⚠️ 実験上の注意事項（すべて確認して✔を付けてください）</div>", unsafe_allow_html=True)
+            c1, c2, c3 = st.columns(3)
             with c1:
-                st.checkbox(f"**👕 服装を確認**：{prec['clothing']}", key="check_cloth")
+                st.checkbox(f"**👕 服装**: {prec['clothing']}", key="check_cloth")
                 if "eyewear" in prec:
-                    st.markdown("**🥽 保護メガネの着用基準を確認**：")
+                    st.caption("**🥽 保護メガネ着用基準**")
                     for i, item in enumerate(prec['eyewear'], 1):
-                        st.checkbox(f"{item}", key=f"check_eye_{i}")
-            with c2:
-                st.checkbox(f"**⚡ 安全上のリスクを確認**：{prec['safety_risks']}", key="check_s_risk")
-                st.checkbox(f"**💻 その他リスクを確認**：{prec['other_risks']}", key="check_o_risk")
+                        st.checkbox(item, key=f"check_eye_{i}")
             
-            st.markdown("**🛠️ 操作上の注意を一つずつ確認**：")
-            for i, item in enumerate(prec['operational'], 1):
-                st.checkbox(f"{item}", key=f"check_op_{i}")
+            with c2:
+                st.checkbox(f"**⚡ 安全リスク**: {prec['safety_risks']}", key="check_s_risk")
+                st.checkbox(f"**💻 その他リスク**: {prec['other_risks']}", key="check_o_risk")
+                st.caption("**🛠️ 操作上の注意**")
+                for i, item in enumerate(prec['operational'], 1):
+                    st.checkbox(item, key=f"check_op_{i}")
                 
-            st.markdown("**🚫 その他注意・制限事項を確認**：")
-            for i, item in enumerate(prec['restrictions'], 1):
-                st.checkbox(f"{item}", key=f"check_res_{i}")
+            with c3:
+                st.caption("**🚫 その他注意・制限事項**")
+                for i, item in enumerate(prec['restrictions'], 1):
+                    st.checkbox(item, key=f"check_res_{i}")
     
     st.divider()
     st.markdown("**実験者情報**")
