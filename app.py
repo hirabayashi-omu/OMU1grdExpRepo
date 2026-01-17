@@ -910,7 +910,7 @@ with st.sidebar:
     st.info("💡 **入力のヒント**：\n各項目は入力後に **Enterキー** を押すか、ボックス外をクリックすると確定・反映されます。")
 
     st.markdown("---")
-    st.markdown("### 🚀 プロセス")
+    st.markdown("### 🚀 レポート作成の手順")
 
     # 1. 作業状態の保存・復元
     with st.container(border=True):
